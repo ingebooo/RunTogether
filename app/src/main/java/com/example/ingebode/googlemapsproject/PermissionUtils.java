@@ -1,8 +1,4 @@
 package com.example.ingebode.googlemapsproject;
-
-/**
- * Created by ingebode on 02/03/16.
- */
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -23,7 +19,7 @@ public abstract class PermissionUtils {
      * Requests the fine location permission. If a rationale with an additional explanation should
      * be shown to the user, displays a dialog that triggers the request.
      */
-    public static void requestPermission(MapsActivity activity, int requestId,
+    public static void requestPermission(AppCompatActivity activity, int requestId,
                                          String permission, boolean finishActivity) {
         if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
             // Display a dialog with rationale.
@@ -79,7 +75,7 @@ public abstract class PermissionUtils {
             mFinishActivity = getArguments().getBoolean(ARGUMENT_FINISH_ACTIVITY);
 
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.create_calendar_message)
+                    .setMessage("location_permission_denied")
                     .setPositiveButton(android.R.string.ok, null)
                     .create();
         }
@@ -88,7 +84,7 @@ public abstract class PermissionUtils {
         public void onDismiss(DialogInterface dialog) {
             super.onDismiss(dialog);
             if (mFinishActivity) {
-                Toast.makeText(getActivity(), R.string.common_signin_button_text,
+                Toast.makeText(getActivity(), "permission_required_toast",
                         Toast.LENGTH_SHORT).show();
                 getActivity().finish();
             }
@@ -139,7 +135,7 @@ public abstract class PermissionUtils {
             mFinishActivity = arguments.getBoolean(ARGUMENT_FINISH_ACTIVITY);
 
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(R.string.create_calendar_message)
+                    .setMessage("permission_rationale_location")
                     .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -160,7 +156,7 @@ public abstract class PermissionUtils {
             super.onDismiss(dialog);
             if (mFinishActivity) {
                 Toast.makeText(getActivity(),
-                        R.string.common_signin_button_text,
+                        "permission_required_toast",
                         Toast.LENGTH_SHORT)
                         .show();
                 getActivity().finish();

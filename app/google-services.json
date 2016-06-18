@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "332339153016",
+    "project_id": "poised-cathode-129511"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332339153016:android:a890e72f40cd2771",
+        "android_client_info": {
+          "package_name": "com.example.ingebode.googlemapsproject"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "332339153016-autih20dbl89d0vo2iltda4ofp5r68im.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ingebode.googlemapsproject",
+            "certificate_hash": "7D5B99DA4CB5063944CD12E4DF50DB0CC112A08E"
+          }
+        },
+        {
+          "client_id": "332339153016-qb2nfm4br3vccm0avjgvromfat6b2t9e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOeikJLIc_leB8_7Zl83OzOR5nF18Owks"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
