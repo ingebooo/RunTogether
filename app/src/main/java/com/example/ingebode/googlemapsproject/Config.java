@@ -5,12 +5,12 @@ package com.example.ingebode.googlemapsproject;
  */
 public class Config {
 
-    public static String FIREBASE_URL = "https://ingeborg.firebaseio.com/";
-    public static String ROUTE_URL = "https://ingeborg.firebaseio.com/routes";
-    public static String USER_URL = "https://ingeborg.firebaseio.com/users";
-    public static String POINTS_URL = "https://ingeborg.firebaseio.com/points";
-    public static String HISTORY_URL = "https://ingeborg.firebaseio.com/history";
-    public static String USER_ROUTE_RELATION_URL = "https://ingeborg.firebaseio.com/userRouteRelation";
+    public static String FIREBASE_URL = "https://ingeborg-ff8bc.firebaseio.com/";
+    public static String ROUTE_URL = "https://ingeborg-ff8bc.firebaseio.com/routes";
+    public static String USER_URL = "https://ingeborg-ff8bc.firebaseio.com/users";
+    public static String POINTS_URL = "https://ingeborg-ff8bc.firebaseio.com/points";
+    public static String HISTORY_URL = "https://ingeborg-ff8bc.firebaseio.com/history";
+    public static String USER_ROUTE_RELATION_URL = "https://ingeborg-ff8bc.firebaseio.com/userRouteRelation";
 
 
 

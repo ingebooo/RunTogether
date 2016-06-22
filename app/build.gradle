@@ -1,6 +1,7 @@
 //noinspection GradleCompatible
 apply plugin: 'com.android.application'
 
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
@@ -18,21 +19,23 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-}
 
+}
 dependencies {
     wearApp project(':wearable')
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.2.1'
-    compile 'com.google.android.gms:play-services-location:9.0.1'
+    compile 'com.google.android.gms:play-services-location:9.0.2'
     compile 'com.android.support:support-v4:23.2.1'
     compile 'com.android.support:design:23.2.1'
     compile 'com.firebaseui:firebase-ui:0.3.1'
-    compile 'com.google.android.gms:play-services-ads:9.0.1'
-    compile 'com.google.android.gms:play-services-identity:9.0.1'
-    compile 'com.google.android.gms:play-services-gcm:9.0.1'
-    compile 'com.google.android.gms:play-services-auth:9.0.1'
-    compile 'com.google.android.gms:play-services-wearable:9.0.1'
+    compile 'com.google.firebase:firebase-auth:9.0.2'
+    compile 'com.google.android.gms:play-services-ads:9.0.2'
+    compile 'com.google.android.gms:play-services-identity:9.0.2'
+    compile 'com.google.android.gms:play-services-gcm:9.0.2'
+    compile 'com.google.android.gms:play-services-auth:9.0.2'
+    compile 'com.google.android.gms:play-services-wearable:9.0.2'
     compile files('libs/firebase-client-android-2.5.2.jar')
 }
+apply plugin: 'com.google.gms.google-services'

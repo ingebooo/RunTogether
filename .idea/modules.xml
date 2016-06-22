@@ -3,6 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/GoogleMapsProject.iml" filepath="$PROJECT_DIR$/GoogleMapsProject.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libsVersion/libsVersion.iml" filepath="$PROJECT_DIR$/libsVersion/libsVersion.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wearable/wearable.iml" filepath="$PROJECT_DIR$/wearable/wearable.iml" />
     </modules>
   </component>
 </project>

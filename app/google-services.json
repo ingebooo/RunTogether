@@ -1,33 +1,35 @@
 {
   "project_info": {
-    "project_number": "332339153016",
-    "project_id": "poised-cathode-129511"
+    "project_number": "166630590113",
+    "firebase_url": "https://ingeborg-ff8bc.firebaseio.com",
+    "project_id": "ingeborg-ff8bc",
+    "storage_bucket": "ingeborg-ff8bc.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:332339153016:android:a890e72f40cd2771",
+        "mobilesdk_app_id": "1:166630590113:android:47a521bffb9c7ad0",
         "android_client_info": {
-          "package_name": "com.example.ingebode.googlemapsproject"
+          "package_name": "com.example.ingebode"
         }
       },
       "oauth_client": [
         {
-          "client_id": "332339153016-autih20dbl89d0vo2iltda4ofp5r68im.apps.googleusercontent.com",
+          "client_id": "166630590113-5e6btomeeboe0o9v9pq2tdavpcpojpvt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.ingebode.googlemapsproject",
+            "package_name": "com.example.ingebode",
             "certificate_hash": "7D5B99DA4CB5063944CD12E4DF50DB0CC112A08E"
           }
         },
         {
-          "client_id": "332339153016-qb2nfm4br3vccm0avjgvromfat6b2t9e.apps.googleusercontent.com",
+          "client_id": "166630590113-4rf1f4l6r9hmt5pr9vc7h9122qretaq6.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDOeikJLIc_leB8_7Zl83OzOR5nF18Owks"
+          "current_key": "AIzaSyDYkN78CSxuoOC3Bow5qGMJ-GOtX7Qb4Pk"
         }
       ],
       "services": {
@@ -35,11 +37,60 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "166630590113-4rf1f4l6r9hmt5pr9vc7h9122qretaq6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:166630590113:android:a890e72f40cd2771",
+        "android_client_info": {
+          "package_name": "com.example.ingebode.googlemapsproject"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "166630590113-n32ms2pjv7cnsrk5l3pg8ghrsj87tb5m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ingebode.googlemapsproject",
+            "certificate_hash": "C549EF5658AFCD101A814276B9DDBB54168A432A"
+          }
+        },
+        {
+          "client_id": "166630590113-4rf1f4l6r9hmt5pr9vc7h9122qretaq6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYkN78CSxuoOC3Bow5qGMJ-GOtX7Qb4Pk"
+        }
+      ],
+      "services": {
+        "analytics_service": {
           "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "166630590113-4rf1f4l6r9hmt5pr9vc7h9122qretaq6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
         }
       }
     }
