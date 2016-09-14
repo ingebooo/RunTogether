@@ -1,4 +1,4 @@
-package com.example.ingebode.googlemapsproject;
+package com.example.ingebode.wearable;
 
 public class Point {
     private int point_number;
@@ -6,7 +6,7 @@ public class Point {
     private String route_id;
     private double latitude;
     private double longitude;
-    private int repetition;
+    //private int repetition;
 
     /*public Point(int point_number,String user_id, String route_id, double latitude, double longitude, int repetition){
         this.point_number=point_number;
@@ -22,12 +22,12 @@ public class Point {
         this.longitude = longitude;
     }
 
-    public Point(String user_id, String route_id, double latitude, double longitude, int repetition){
+    public Point(String user_id, String route_id, double latitude, double longitude, int point_number){
         this.user_id=user_id;
         this.route_id=route_id;
         this.latitude=latitude;
         this.longitude=longitude;
-        this.repetition=repetition;
+        this.point_number = point_number;
     }
     public Point(){
 
@@ -35,9 +35,9 @@ public class Point {
 
 
 
-    /*public int getPointNumber(){
+    public int getPointNumber(){
         return point_number;
-    }*/
+    }
 
     public String getUser_id(){
         return user_id;
@@ -53,10 +53,6 @@ public class Point {
 
     public double getLongitude(){
         return longitude;
-    }
-
-    public int getRepetition(){
-        return repetition;
     }
 
 }

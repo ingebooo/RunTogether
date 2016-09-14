@@ -2,11 +2,13 @@ package com.example.ingebode.googlemapsproject;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -44,6 +46,10 @@ public class RouteChoice extends Activity{
     private String route_id, point_collection_id;
     double lat1, long1, lat2, long2;
     String username;
+    String competitor_username;
+    Typeface myFontMedium;
+    Typeface myFontLight;
+    Typeface myFontBold;
 
     boolean createNewRoute = false;
 
@@ -52,10 +58,25 @@ public class RouteChoice extends Activity{
         super.onCreate(savedInstanceState);
         Firebase.setAndroidContext(this);
 
-        setContentView(R.layout.activity_route_choice);
+        myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
+        myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
+        myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
+
+        setContentView(R.layout.route_choice);
+
+        TextView welcome = (TextView)findViewById(R.id.welcome);
+        welcome.setTypeface(myFontBold);
+
+        TextView createNew = (TextView)findViewById(R.id.newRoute);
+        createNew.setTypeface(myFontLight);
+
+        final Button create = (Button)findViewById(R.id.buttonCreateNewRoute);
+        create.setTypeface(myFontLight);
+
+        TextView pick = (TextView)findViewById(R.id.pickEx);
+        pick.setTypeface(myFontLight);
 
         Intent intent = getIntent();
-        Log.v("Logget inn som",""+intent.getStringExtra("name"));
 
         firebaseRef = new Firebase(Config.FIREBASE_URL);
         Firebase routeRef = firebaseRef.child("routes");
@@ -65,21 +86,24 @@ public class RouteChoice extends Activity{
         routeList = (ListView)findViewById(R.id.RoutelistView1);
         usernameTextView = (TextView)findViewById(R.id.name);
 
+
         username = intent.getStringExtra("USERNAME");
 
         usernameTextView.setText(username);
+        usernameTextView.setTypeface(myFontMedium);
 
         user_id = intent.getStringExtra("USER_ID");
 
         mAdapter = new FirebaseListAdapter<Route>(this, Route.class, R.layout.single_active_list, routeRef) {
             @Override
             protected void populateView(View view, Route r, int i) {
-               /* ((TextView)view.findViewById(android.R.id.text1)).setText(r.getRoute_name());
-                list.add(r.getRoute_name());*/
+
                 TextView routeNameView = (TextView) view.findViewById(R.id.text_view_list_name);
-                TextView ownerView = (TextView) view.findViewById(R.id.text_view_created_by_user);
                 routeNameView.setText(r.getRoute_name());
-                ownerView.setText(r.getUsername());
+                routeNameView.setTypeface(myFontLight);
+                routeNameView.setTextSize(20);
+
+
 
             }
         };
@@ -109,8 +133,10 @@ public class RouteChoice extends Activity{
 
         createNewRoute = true;
         EditText editText = (EditText) findViewById(R.id.editTextRouteName);
-
         route_name = editText.getText().toString();
+        editText.setTypeface(myFontLight);
+
+
 
         if (route_name.isEmpty()){
             Toast.makeText(getApplicationContext(), "Please insert a route name", Toast.LENGTH_SHORT).show();
@@ -133,6 +159,7 @@ public class RouteChoice extends Activity{
         intent.putExtra("CREATENEWROUTE", createNewRoute);
         intent.putExtra("USERNAME", username);
         intent.putExtra("POINT_COLLECTION_ID", point_collection_id);
+        intent.putExtra("COMPETITOR_USERNAME", competitor_username);
         startActivity(intent);
     }
     public void passIntentNewRoute(){

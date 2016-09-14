@@ -2,6 +2,7 @@ package com.example.ingebode.googlemapsproject;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -40,29 +41,18 @@ public class CompetitorChoice extends Activity {
     public static double lat1,long1,lat2,long2;
     public static String route_id,user_id,competitor_id, point_collection_id;
     public static boolean createNewRoute;
-    public static int feedback=1;
+    public static int feedback=4;
     public static String route_name,competitor_username;
 
     FirebaseListAdapter mAdapter;
-    ArrayList<String> list;
-
-    Firebase userRef = new Firebase(Config.USER_URL);
-
-    //List<String> listUserIds;
-
-    FirebaseArray listUsersId;
-    FirebaseArray listUserNames;
+    Typeface myFontMedium;
+    Typeface myFontLight;
+    Typeface myFontBold;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_competitor_choice);
-
-
-        //Google Analytics
-       /* Tracker t = ((fitnessApp) getApplication()).getTracker(fitnessApp.TrackerName.APP_TRACKER);
-        t.setScreenName("CompetitorChoice");
-        t.send(new HitBuilders.ScreenViewBuilder().build()); */
 
         final ListView listview = (ListView) findViewById(R.id.UserlistView1);
 
@@ -77,15 +67,26 @@ public class CompetitorChoice extends Activity {
         route_name=intent.getStringExtra("ROUTE_NAME");
         point_collection_id = intent.getStringExtra("POINT_COLLECTION_ID");
 
-        Firebase ref = new Firebase(Config.FIREBASE_URL).child("RouteRelations").child(route_id);
+        Firebase ref = new Firebase(Config.FIREBASE_URL).child("routeRelations").child(route_id);
 
         mAdapter = new FirebaseListAdapter<UserRouteRelation>(this, UserRouteRelation.class, android.R.layout.activity_list_item, ref) {
             @Override
             protected void populateView(View view, UserRouteRelation ur, int i) {
-                ((TextView)view.findViewById(android.R.id.text1)).setText(ur.getUsername());
+                TextView nameView = (TextView) view.findViewById(android.R.id.text1);
+                nameView.setText(ur.getUsername());
+                nameView.setTypeface(myFontLight);
             }
         };
         listview.setAdapter(mAdapter);
+
+        myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
+        myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
+        myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
+
+        TextView text1 = (TextView)findViewById(R.id.text);
+        text1.setTypeface(myFontMedium);
+        //TextView text2 = (TextView)findViewById(R.id.text2);
+        //text2.setTypeface(myFontMedium);
 
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -102,7 +103,7 @@ public class CompetitorChoice extends Activity {
     }
 
 public void passIntent(){
-        Intent intent2 = new Intent(this, FeedbackChoice.class);
+        Intent intent2 = new Intent(this, StartWearActivity.class);
         intent2.putExtra("LAT1", lat1);
         intent2.putExtra("LONG1", long1);
         intent2.putExtra("LAT2", lat2);

@@ -13,6 +13,7 @@ import com.example.ingebode.R;
 import com.example.ingebode.googlemapsproject.models.History;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -51,7 +52,7 @@ public class HistoryFragment extends Fragment {
         List<History> listHistory = new ArrayList<>();
         //String user_id,String route_id,String date, double distance,double avg_speed
 
-        listHistory.add(new History("dsadas", "rerwe", "123", 2.3, 1.2));
+        //listHistory.add(new History("dsadas", "rerwe", "123", 2.3, 1.2));
 
 
         //Populating lists
@@ -61,8 +62,10 @@ public class HistoryFragment extends Fragment {
         final ArrayList<String> list4 = new ArrayList<String>();
         for (int i=0; i < listHistory.size(); ++i){
             //list1.add(db.getRouteName(listHistory.get(i).getRoute_id()));
+
+            Date date = new Date();
             list1.add("penis");
-            list2.add(listHistory.get(i).getDate());
+            list2.add(listHistory.get(i).getTime());
             list3.add(String.valueOf(listHistory.get(i).getDistance()));
             list4.add(String.valueOf(listHistory.get(i).getAvg_speed()));
         }

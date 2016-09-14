@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Welcome"
+        android:textSize="40sp"
+        android:id="@+id/welcome"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="10dp"
+        android:textColor="@color/morkGraa"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="name"
+        android:id="@+id/name"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Create new route:"
+        android:id="@+id/newRoute"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="25dp" />
+
+    <RelativeLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="20dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        >
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:id="@+id/editTextRouteName"
+            android:hint="New route name"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/centerPoint"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="7dp"
+            android:backgroundTint="@color/lysGraa"
+            android:background="@drawable/shape"
+            android:padding="10dp"
+            />
+        <TextView
+            android:id="@+id/centerPoint"
+            android:text=""
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="Create new"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textAllCaps="false"
+            android:id="@+id/buttonCreateNewRoute"
+            android:onClick="createNewRoute"
+            android:textColor="@android:color/white"
+            android:background="@drawable/shape"
+            android:backgroundTint="@color/turkis"
+            android:layout_alignParentRight="true"
+            android:layout_toRightOf="@+id/centerPoint"
+            android:layout_marginRight="40dp"
+            android:layout_marginLeft="7dp"
+            />
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Or pick an existing:"
+        android:id="@+id/pickEx"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="25dp" />
+
+    <ListView
+        android:id="@+id/RoutelistView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:dividerHeight="1dp"
+        android:divider="@color/turkis"
+        android:background="@drawable/listview_shape"
+        android:layout_margin="20dp">
+    </ListView>
+
+
+</LinearLayout>

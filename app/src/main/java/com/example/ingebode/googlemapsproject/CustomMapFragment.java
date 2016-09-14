@@ -2,27 +2,20 @@ package com.example.ingebode.googlemapsproject;
 
 
 import android.Manifest;
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
-import android.database.Observable;
 import android.graphics.Color;
 import android.location.Location;
 import android.media.MediaPlayer;
-import android.os.Build;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -36,12 +29,10 @@ import android.widget.Toast;
 import com.example.ingebode.googlemapsproject.models.Finish;
 import com.example.ingebode.googlemapsproject.models.History;
 import com.example.ingebode.googlemapsproject.models.Route;
-import com.example.ingebode.googlemapsproject.models.User;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
-import com.firebase.client.GenericTypeIndicator;
 import com.firebase.client.ValueEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -63,11 +54,14 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.example.ingebode.R;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -77,13 +71,15 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by ingebode on 14/03/16.
@@ -92,7 +88,7 @@ public class CustomMapFragment extends Fragment
         implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener,
-        OnMapReadyCallback {
+        OnMapReadyCallback, MessageApi.MessageListener {
 
     private String title;
     private int page;
@@ -105,15 +101,17 @@ public class CustomMapFragment extends Fragment
     double newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong;
     String user_id, competitor_id, route_id;
     String route_name, competitor_username, username;
+    String timeString = "";
+    int point_number = 0;
 
     double lat1, long1, lat2, long2;
-    private List<Point> listPoints, tempList;
-    private List<Point> newPoints = new ArrayList<>();
+
+    private List<Route.Point> listPoints;
+    private List<Route.Point> newPoints = new ArrayList<>();
     Timer timer;
     TimerTask timerTask;
     int counter = 0;
 
-    boolean startBtnPushed = false;
 
     Handler handler = new Handler();
     MarkerOptions markerOptions3;
@@ -123,11 +121,13 @@ public class CustomMapFragment extends Fragment
 
     TextView warningTextView;
     boolean running;
-    boolean createNewRoute = false;
+    boolean createNewRoute = true;
     int feedback, user_repetition, co_user_repetition;
+    Date now;
 
     private String point_collection_id;
-
+    private static final String START_ACTIVITY_PATH = "/start-activity";
+    String WEARABLE_DATA_PATH = "/wearable_data";
 
     //Firebase
     Firebase routeRef;
@@ -137,27 +137,26 @@ public class CustomMapFragment extends Fragment
     Firebase pointsRef = new Firebase(Config.POINTS_URL);
     Map<String, Object> runnedByMap = new HashMap<String, Object>();
 
-    private ProgressDialog progressDialog;
-
     //Location
     private String mLastUpdateTime;
     PendingResult<LocationSettingsResult> result;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     Location mLastLocation;
-    boolean mRequestLocationUpdates;
     LocationRequest mLocationRequest;
-    MarkerOptions marker;
-    private Polyline line;
-    PolylineOptions rectOptions;
 
-    DataMap dataMap;
+    PolylineOptions rectOptions;
     ArrayList<DataMap> pointData;
+
+    float avg_speed = 0;
+    float old_avg = 0;
+    float forget = 0;
 
 
     //map
     private static GoogleMap mMap;
     GoogleApiClient mGoogleApiClient;
+    private float topSpeed;
 
     // newInstance constructor for creating fragment with arguments
     public static CustomMapFragment newInstance(int page, String title) {
@@ -196,18 +195,8 @@ public class CustomMapFragment extends Fragment
             Toast.makeText(getActivity().getApplicationContext(), "createnew route = false", Toast.LENGTH_SHORT).show();
 
             listPoints = new ArrayList<>();
-            dataMap = new DataMap();
             pointData = new ArrayList<>();
 
-            /*co_user_repetition = db.getRepetitions(Integer.toString(route_id), Integer.toString(competitor_id));
-            competitor_username = db.getUsername(competitor_id);
-
-            for (int j = 1; j <= co_user_repetition; j++) {
-                tempList = db.getPointsByRepetition(Integer.toString(route_id), Integer.toString(competitor_id), Integer.toString(j));
-                if (listPoints == null || tempList.size() <= listPoints.size()) {
-                    listPoints = tempList;
-                }
-            }*/
 
             Firebase pointsRef = new Firebase(Config.POINTS_URL).child(point_collection_id);
             pointsRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -215,24 +204,25 @@ public class CustomMapFragment extends Fragment
                 public void onDataChange(DataSnapshot snapshot) {
                     // do some stuff once
                     for (DataSnapshot snap : snapshot.getChildren()) {
-                        Point point = snap.getValue(Point.class);
-                        Point otherPoint = new Point(point.getLatitude(), point.getLongitude());
+                        Route.Point point = snap.getValue(Route.Point.class);
+                        Route.Point otherPoint = new Route.Point(point.getLatitude(), point.getLongitude());
 
-                        Log.v("pointsLogging", "otherPoint.getLatitude()" +otherPoint.getLatitude());
-                        Log.v("pointsLogging", "otherPoint.getLongitude()" + otherPoint.getLongitude());
+                        DataMap map = new DataMap();
+
+                        map.putString("user_id", point.getUser_id());
+                        map.putString("route_id", point.getRoute_id());
+                        map.putDouble("latitude", point.getLatitude());
+                        map.putDouble("longitude", point.getLongitude());
+                        pointData.add(map);
 
                         rectOptions = new PolylineOptions().add(new LatLng(point.getLatitude(), point.getLongitude()));
-                        Log.v("pointsLogging", "recoptions" + rectOptions.getPoints());
                         rectOptions.color(Color.BLUE);
                         rectOptions.width(5);
                         listPoints.add(otherPoint);
-
-                        dataMap.putDouble("lat#"+snapshot.getChildren(), point.getLatitude());
-                        dataMap.putDouble("long#"+snapshot.getChildren(), point.getLongitude());
-                        pointData.add(dataMap);
                     }
 
-                    //sendDataToWearable();
+                    new SendReadyToRunTask();
+                    new SendToDataLayerThread(WEARABLE_DATA_PATH, pointData).start();
                 }
                 @Override
                 public void onCancelled(FirebaseError firebaseError) {
@@ -242,28 +232,6 @@ public class CustomMapFragment extends Fragment
 
         //user_repetition = db.getRepetitions(Integer.toString(route_id), Integer.toString(user_id)) + 1;
         user_repetition = 0;
-    }
-    private void sendDataToWearable(){
-        if(mGoogleApiClient.isConnected()){
-            ConnectionResult connectionResult = mGoogleApiClient.blockingConnect(10, TimeUnit.SECONDS);
-            if(connectionResult.isSuccess() && mGoogleApiClient.isConnected() && pointData.size() > 0){
-                PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/point");
-                putDataMapRequest.getDataMap().putDataMapArrayList("/extra_point", pointData);
-                PutDataRequest request = putDataMapRequest.asPutDataRequest();
-                request.setUrgent();
-
-                DataApi.DataItemResult result = Wearable.DataApi.putDataItem(mGoogleApiClient, request).await();
-
-                if (!result.getStatus().isSuccess()) {
-                    Log.e("tag", String.format("Error sending data using DataApi (error code = %d)",
-                            result.getStatus().getStatusCode()));
-                }
-
-            } else {
-                Log.e("tag", String.format("yolo",
-                        connectionResult.getErrorCode()));
-            }
-        }
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -310,10 +278,12 @@ public class CustomMapFragment extends Fragment
                     newRouteStartLat = current_lat;
                     newRouteStartLong = current_long;
 
-                    addRoute(newRouteStartLat, newRouteStartLong, 0, 0, route_name);
+                    now = new Date();
+
+                    addRoute(newRouteStartLat, newRouteStartLong, 0, 0, route_name, "");
 
                     if (timer == null) {
-                        //startTimer();
+                        startTimer();
                     }
                 }
 
@@ -333,7 +303,7 @@ public class CustomMapFragment extends Fragment
 
                 lat2 = current_lat;
                 long2 = current_long;
-
+                running = false;
                 //stop the timer, if it's not already null
                 if (timer != null) {
                     timer.cancel();
@@ -341,6 +311,17 @@ public class CustomMapFragment extends Fragment
                 }
 
                 if (createNewRoute == true) {
+
+
+                    Date endTime = new Date();
+                    long diff = endTime.getTime() - now.getTime();
+
+
+                    SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+                    sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+
+                    String dateString = sdt.format(new Date(diff));
 
                     warningTextView.setText("Route saved!");
                     warningTextView.setTextColor(Color.GREEN);
@@ -354,6 +335,8 @@ public class CustomMapFragment extends Fragment
                     Map<String, Object> map = new HashMap<String, Object>();
                     map.put("finish_latitude", newRouteFinishLat);
                     map.put("finish_longitude", newRouteFinishLong);
+
+                    map.put("time", dateString);
 
 
                     //trenger null sjekk
@@ -373,15 +356,29 @@ public class CustomMapFragment extends Fragment
         return view;
     }
 
+    private void sendReadyToRunMessage(String node) {
+        Wearable.MessageApi.sendMessage(
+                mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            Log.v("fail", "faild to send msg" + "");
+                        }
+                    }
+                }
+        );
+    }
+
     //Firebase methods for saving data to server
-    public void addRoute(double startLat, double startLong, double finishLat, double finishLong, String route_name) {
+    public void addRoute(double startLat, double startLong, double finishLat, double finishLong, String route_name, String time) {
         Firebase ref = new Firebase(Config.FIREBASE_URL);
 
         routeRef = ref.child("routes");
 
         newRouteRef = routeRef.push();
 
-        Route route = new Route("", point_collection_id, startLat, startLong, finishLat, finishLong, route_name);
+        Route route = new Route("", point_collection_id, startLat, startLong, finishLat, finishLong, route_name, "");
 
         newRouteRef.setValue(route);
 
@@ -395,18 +392,23 @@ public class CustomMapFragment extends Fragment
 
         String date = getDate();
 
+        Date endTime = new Date();
+        long diff = endTime.getTime() - now.getTime();
+        SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+        sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+        String time = sdt.format(new Date(diff));
+
         double distance = 0;
         //Calculate distance(in km) from latitude & longitude
-        if (createNewRoute == false) {
-            distance = Math.floor(calcDistance(lat1, long1, lat2, long2) * 100) / 100;
-        } else if (createNewRoute == true) {
-            distance = Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100;
-        }
+        distance = Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100;
+
 
         //Calculate Average Speed (in km/hr) calculated with point period of 10 secs
-        double avg_speed = Math.floor((360 * distance) / newPoints.size()) * 100 / 100;
+        //avg_speed = Math.floor((360 * distance) / newPoints.size()) * 100 / 100;
 
-        History history = new History(user_id, route_id, date, distance, avg_speed);
+        //TODO: add time here
+
+        History history = new History(user_id, route_id, distance, avg_speed,topSpeed * 3600/1000, time);
 
         Firebase historyRef = new Firebase(Config.HISTORY_URL);
         historyRef.push().setValue(history);
@@ -430,16 +432,25 @@ public class CustomMapFragment extends Fragment
 
     private void createUserRouteRelation() {
 
+
+        Date endTime = new Date();
+        long diff = endTime.getTime() - now.getTime();
+
+
+        SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+        sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+
+        String dateString = sdt.format(new Date(diff));
+
         Firebase reffer = new Firebase(Config.FIREBASE_URL);
-        Firebase newReffer = reffer.child("RouteRelations");
+        Firebase newReffer = reffer.child("routeRelations");
 
         Firebase newRefferRouteID = newReffer.child(route_id);
 
-        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id);
-        //UserRouteRelation relation2 = new UserRouteRelation(route_id,"12334", "janne oftedall");
+        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id, dateString, 0, 0,0);
 
         newRefferRouteID.push().setValue(relation);
-        //newRefferRouteID.push().setValue(relation2);
     }
     @Override
     public void onConnected(Bundle connectionHint) {
@@ -532,14 +543,6 @@ public class CustomMapFragment extends Fragment
         } else if (createNewRoute == true) {
             //moving camera to  start position(there is no start)
 
-            //dont need this start
-            //mMap.addMarker(new MarkerOptions().position(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).title("Start"));
-
-            //CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).zoom(17).build();
-
-            /*CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())).zoom(17).build();
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));*/
-
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom((new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())), 17));
         }
         if(mMap == null) {
@@ -576,22 +579,34 @@ public class CustomMapFragment extends Fragment
         current_long = location.getLongitude();
         marker3.setPosition(new LatLng(current_lat, current_long));
 
-
         CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(current_lat, current_long)).zoom(17).build();
         //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom((new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())), 17));
 
-        Toast.makeText(this.getActivity(), "Location updated!", Toast.LENGTH_SHORT).show();
+
+
+        if(topSpeed == 0){
+            topSpeed = location.getSpeed();
+        } else if (location.getSpeed() > topSpeed){
+            topSpeed = location.getSpeed();
+        }
 
 
         //mLastLocation = location;
 
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
 
+        /*
         if(running == true){
-            Point point  = new Point(user_id, route_id, current_lat, current_long, user_repetition);
+            Route.Point point  = new Route.Point(user_id, route_id, current_lat, current_long, user_repetition, point_number++);
             newPoints.add(point);
             //addPoint(current_lat, current_long);
-        }
+
+            if(topSpeed == 0){
+                topSpeed = location.getSpeed();
+            } else if (location.getSpeed() > topSpeed){
+                topSpeed = location.getSpeed();
+            }
+        }*/
         checkProximity();
     }
     //connect to google api client
@@ -699,7 +714,6 @@ public class CustomMapFragment extends Fragment
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Toast.makeText(getActivity(), "OnConnectionFailed.", Toast.LENGTH_LONG).show();
 
-
     }
     public void checkProximity() {
         //check if user is close to Start
@@ -806,7 +820,8 @@ public class CustomMapFragment extends Fragment
         initializeTimerTask();
 
         //schedule the timer, the TimerTask will run every 10sec
-            timer.schedule(timerTask, 10000, 10000); //
+        //adding points each second
+            timer.schedule(timerTask, 3000, 1000); //
 
     }
     protected void stopLocationUpdates() {
@@ -814,11 +829,7 @@ public class CustomMapFragment extends Fragment
                 mGoogleApiClient, this);
     }
         public void initializeTimerTask() {
-            Log.v("pointsLogging", "initializeTimerTask()" + "");
-            Log.v("Listpoints.size", + listPoints.size() + "");
-            mMap.addPolyline(rectOptions);
-            Log.v("pointsLogging","mMap.addPolyline(rectOptions)" + rectOptions);
-
+            //mMap.addPolyline(rectOptions);
         timerTask = new TimerTask() {
 
 
@@ -828,6 +839,19 @@ public class CustomMapFragment extends Fragment
                 handler.post(new Runnable() {
                     public void run() {
                         //show competitor route only if createNewRoute==false and feedback==4
+
+                        if(running == true){
+                            Route.Point point  = new Route.Point(user_id, route_id, current_lat, current_long, user_repetition, point_number++);
+                            newPoints.add(point);
+                            //addPoint(current_lat, current_long);
+                            Toast.makeText(getActivity().getApplicationContext(), "Point added to list", Toast.LENGTH_SHORT).show();
+
+                            old_avg = avg_speed;
+                            avg_speed = (newPoints.size() * old_avg - forget * mLastLocation.getSpeed());
+                            forget = mLastLocation.getSpeed();
+                        }
+
+                        /*
                         if ((createNewRoute == false) && (feedback == 4)) {
                             if (marker4 == null) {
                                 marker4 = mMap.addMarker(markerOptions4);
@@ -892,7 +916,7 @@ public class CustomMapFragment extends Fragment
 
                                 }
                             }
-                        }
+                        }*/
                     }
                 });
             }
@@ -904,6 +928,61 @@ public class CustomMapFragment extends Fragment
      */
     public void onDisconnected() {
         Toast.makeText(getActivity(), "Disconnected. Please re-connect.", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+
+    }
+    private class SendReadyToRunTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... args) {
+            Log.v("SendReadyToRunTask", "" + "");
+            Collection<String> nodes = getNodes();
+            for (String node : nodes) {
+                sendReadyToRunMessage(node);
+            }
+            return null;
+        }
+    }
+    class SendToDataLayerThread extends Thread {
+        String path;
+        ArrayList<DataMap> dataMapArrayList;
+
+        SendToDataLayerThread(String p, ArrayList<DataMap> dataList) {
+            path = p;
+            dataMapArrayList = dataList;
+        }
+
+        public void run() {
+            PutDataMapRequest dataMap = PutDataMapRequest
+                    .create(path);
+
+            dataMap.getDataMap().putDataMapArrayList("pointsList", dataMapArrayList);
+
+            PutDataRequest request = dataMap.asPutDataRequest();
+
+            DataApi.DataItemResult result = Wearable.DataApi.putDataItem(mGoogleApiClient, request).await();
+            if (result.getStatus().isSuccess()) {
+                Log.v("myTag", "DataMap: " + dataMapArrayList.size() + " sent successfully to data layer ");
+            }
+            else {
+                // Log an error
+                Log.v("myTag", "ERROR: failed to send DataMapArrayList to data layer");
+            }
+        }
+    }
+    private Collection<String> getNodes() {
+        HashSet<String> results = new HashSet<>();
+        NodeApi.GetConnectedNodesResult nodes =
+                Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+
+        for (Node node : nodes.getNodes()) {
+            results.add(node.getId());
+        }
+
+        return results;
     }
 }
 

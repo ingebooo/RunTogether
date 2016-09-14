@@ -16,14 +16,14 @@ android:orientation="horizontal">
 <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Hello "
+    android:text="Welcome"
     android:textColor="#ff4c00"
     android:textSize="20sp"
     android:textStyle="bold" />
 
 <TextView
     android:id="@+id/name"
-    android:layout_width="wrap_content"
+    android:layout_width="14dp"
     android:layout_height="wrap_content"
     android:textSize="20sp"
     android:textStyle="bold" />

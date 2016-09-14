@@ -15,18 +15,11 @@
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:paddingBottom="20dp"
-        android:text="Please choose your competitor:"
-        android:textColor="#ff4c00"
+        android:id="@+id/text"
+        android:text="Please choose friend to run with:"
+        android:textColor="@color/turkis"
         android:textSize="20sp"
         android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="(if you choose your name you'll compete your best time till now!)"
-        android:textColor="#ff4c00"
-        android:textSize="16sp" />
 
     <ListView
         android:id="@+id/UserlistView1"

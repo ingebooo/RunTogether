@@ -9,12 +9,20 @@ public class UserRouteRelation {
     String route_id;
     String username;
     String point_collection_id;
+    String time;
+    int times_infront;
+    int times_behind;
+    int times_beside;
 
-    public UserRouteRelation(String route_id, String user_id, String username, String point_collection_id){
+    public UserRouteRelation(String route_id, String user_id, String username, String point_collection_id, String time, int times_behind, int times_infront, int times_beside){
         this.user_id = user_id;
         this.route_id = route_id;
         this.username = username;
         this.point_collection_id = point_collection_id;
+        this.time = time;
+        this.times_behind = times_behind;
+        this.times_infront = times_infront;
+        this.times_beside = times_beside;
     }
     public UserRouteRelation(){
 
@@ -31,5 +39,19 @@ public class UserRouteRelation {
 
     public String getUser_id() {
         return user_id;
+    }
+    public String getTime(){
+        return time;
+    }
+
+    public int getTimes_behind() {
+        return times_behind;
+    }
+
+    public int getTimes_infront() {
+        return times_infront;
+    }
+    public int getTimes_beside(){
+        return times_beside;
     }
 }
