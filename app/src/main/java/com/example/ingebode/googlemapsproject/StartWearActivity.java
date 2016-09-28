@@ -40,6 +40,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
@@ -49,6 +50,8 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -62,6 +65,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
+
 /**
  * Created by ingeborgoftedal on 19/07/16.
  */
@@ -74,6 +78,9 @@ public class StartWearActivity extends FragmentActivity implements
     Button send_btn;
     Button start_wear;
     Button fillArray;
+
+    CSVFile csvFile;
+    File file;
 
     int timesBehind = 0;
     int timesInfront = 0;
@@ -170,9 +177,9 @@ public class StartWearActivity extends FragmentActivity implements
                 Toast.makeText(getApplicationContext(),
                         "Stopping", Toast.LENGTH_SHORT)
                         .show();
-                    running = false;
+                running = false;
                 timer.cancel();
-                    writeToHistory();
+                writeToHistory();
                 Intent intent2 = new Intent(getApplicationContext(), Finish.class);
                 intent2.putExtra("LAT1", lat1);
                 intent2.putExtra("LONG1", long1);
@@ -196,24 +203,24 @@ public class StartWearActivity extends FragmentActivity implements
                 Toast.makeText(getApplicationContext(),
                         "Start btn pushed", Toast.LENGTH_SHORT)
                         .show();
-                    running = true;
-                    warningTextView.setText("Now running...");
+                running = true;
+                warningTextView.setText("Now running...");
 
-                    now = new Date();
+                now = new Date();
 
-                    newPointCollection = pointsRef.push();
-                    new_point_collection_id = newPointCollection.getKey();
+                newPointCollection = pointsRef.push();
+                new_point_collection_id = newPointCollection.getKey();
 
+                Toast.makeText(getApplicationContext(),
+                        "Gooooo...", Toast.LENGTH_SHORT)
+                        .show();
+
+                if(timer == null){
+                    startTimer();
                     Toast.makeText(getApplicationContext(),
-                            "Gooooo...", Toast.LENGTH_SHORT)
+                            "Timer started!!", Toast.LENGTH_SHORT)
                             .show();
-
-                    if(timer == null){
-                        startTimer();
-                        Toast.makeText(getApplicationContext(),
-                                "Timer started!!", Toast.LENGTH_SHORT)
-                                .show();
-                    } else {
+                } else {
                     Toast.makeText(getApplicationContext(),
                             "Timer not started...", Toast.LENGTH_SHORT)
                             .show();
@@ -235,44 +242,76 @@ public class StartWearActivity extends FragmentActivity implements
                 .build();
 
         getDataFromIntent();
-        int point_number = 0;
+        final int point_number = 0;
 
-            pointsRef = new Firebase(Config.POINTS_URL).child(point_collection_id);
-            pointsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    // do some stuff once
-                    for (DataSnapshot snap : snapshot.getChildren()) {
-                        Route.Point point = snap.getValue(Route.Point.class);
-                        DataMap map = new DataMap();
 
-                        map.putString("user_id", point.getUser_id());
-                        map.putString("route_id", point.getRoute_id());
-                        map.putDouble("latitude", point.getLatitude());
-                        map.putDouble("longitude", point.getLongitude());
-                        map.putInt("point_number", point.getPoint_number());
-                        map.putInt("counter", (int) snapshot.getChildrenCount());
-                        map.putString("competitor_name", competitor_username);
-                        map.putInt("feedback", feedback);
-                        map.putString("username", username);
-                        //Log.v("time", new Date().getTime() + "");
-                        //ADD RANDOM ELLER TIMESTAMP!
-                        pointData.add(map);
-                        listPoints.add(point);
-                    }
-                    new SendToDataLayerThread(WEARABLE_DATA_PATH, pointData).start();
-                    new SendReadyToRunTask().execute();
+
+        csvFile = new CSVFile((getApplicationContext()));
+
+        pointsRef = new Firebase(Config.POINTS_URL).child(point_collection_id);
+        pointsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                // do some stuff once
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    Route.Point point = snap.getValue(Route.Point.class);
+                    DataMap map = new DataMap();
+
+                    map.putString("user_id", point.getUser_id());
+                    map.putString("route_id", point.getRoute_id());
+                    map.putDouble("latitude", point.getLatitude());
+                    map.putDouble("longitude", point.getLongitude());
+                    map.putInt("point_number", point.getPoint_number());
+                    map.putInt("counter", (int) snapshot.getChildrenCount());
+                    map.putString("competitor_name", competitor_username);
+                    map.putInt("feedback", feedback);
+                    map.putString("username", username);
+                    //Log.v("time", new Date().getTime() + "");
+                    //ADD RANDOM ELLER TIMESTAMP!
+
+                    //public void writePoints(String filename,String user_id,String route_id,String latitude,String longitude, String point_number){
+
+
+                    file = csvFile.writePoints("points_number " + point_number + ".txt", ": user_id" + point.getUser_id(), " ,route_id: " + point.getRoute_id(), ", latitude: " + point.getLatitude(), ", longitude: " + point.getLongitude(), ", counter: " + snapshot.getChildrenCount());
+
+                    pointData.add(map);
+                    listPoints.add(point);
+
+
                 }
 
-                @Override
-                public void onCancelled(FirebaseError firebaseError) {
+                /*
+                FileInputStream fileInputStream = null;
 
+                byte[] bFile = new byte[(int) file.length()];
+                try {
+                    fileInputStream = new FileInputStream(file);
+                    fileInputStream.read(bFile);
+                    fileInputStream.close();
+                } catch (Exception e) {
                 }
-            });
+                Asset asset = Asset.createFromBytes(bFile);*/
+
+                /*
+                Log.v("pointdata.size", pointData.size()  + "");
+                Asset asset = Asset.createFromBytes(file.toURI());*/
+
+                new SendToDataLayerThread(WEARABLE_DATA_PATH, pointData).start();
+                new SendReadyToRunTask().execute();
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+    }
+    public void sendTextFile(ArrayList list){
 
     }
     public void getDataFromIntent() {
@@ -308,7 +347,7 @@ public class StartWearActivity extends FragmentActivity implements
         );
     }
 
-// Send a data object when the data layer connection is successful.    @Override
+    // Send a data object when the data layer connection is successful.    @Override
     protected void onStop() {
         if (null != googleClient && googleClient.isConnected()) {
             googleClient.disconnect();
@@ -483,7 +522,7 @@ public class StartWearActivity extends FragmentActivity implements
         timer = new Timer();
         checkCounter();
 
-        timer.schedule(timerTask, 3000, 1000);
+        timer.schedule(timerTask, 3000, 3000);
     }
     public void checkCounter() {
         timerTask = new TimerTask() {
@@ -495,9 +534,10 @@ public class StartWearActivity extends FragmentActivity implements
                         //float new_avg = 0;
                         //float new_avg = 0;
 
-                        if(running == true){
+                        if (running == true) {
                             Toast.makeText(getApplicationContext(), "Point added to list", Toast.LENGTH_SHORT).show();
                             Route.Point point = new Route.Point(user_id, route_id, current_lat, current_long, 0, point_number++);
+
                             Log.v("onLocCha: mobile", "lat" + current_lat);
                             Log.v("onLocCha: mobile", "long" + current_long);
                             Log.v("onLocChanged", "point_number" + point_number);
@@ -506,15 +546,18 @@ public class StartWearActivity extends FragmentActivity implements
                             old_avg = avg_speed;
                             avg_speed = (newPoints.size() * old_avg - forget * mLastLocation.getSpeed());
                             forget = mLastLocation.getSpeed();
-                        }
 
-/*
-                        if (counter < listPoints.size()) {
-                            double latitude = listPoints.get(counter).getLatitude();
-                            double longitude = listPoints.get(counter).getLongitude();
-                            counter++;
+                            if (listPoints.size() > point_number) {
+                                double friendLat = listPoints.get(point_number).getLatitude();
+                                double friendLong = listPoints.get(point_number).getLongitude();
+                                if (isAhead(friendLat, friendLong)) {
+                                    timesInfront++;
+                                } else {
+                                    timesBehind++;
+                                }
+                            }
                         }
-                    */}
+                    }
                 });
             }
         };
@@ -524,18 +567,11 @@ public class StartWearActivity extends FragmentActivity implements
         super.onDestroy();
     }
 
-    private int isAhead(double latitude, double longitude) {
+    private boolean isAhead(double latitude, double longitude) {
         double a = calcDistance(lat1, long1, current_lat, current_long);
         double b = calcDistance(lat1, long1, latitude, longitude);
-        if (a > b){
-            return 1;
-        }
-        else if (a == b){
-            return 2;
-        }
-        else {
-            return 3;
-        }
+        if (a > b) return true;
+        else return false;
     }
     private String getDate() {
         //Get date
@@ -567,12 +603,6 @@ public class StartWearActivity extends FragmentActivity implements
         historyRef.push().setValue(history);
 
         createUserRouteRelation();
-
-        //placing the whole list  with new points into firebase with new point collection ID
-        //pointsResetValue(newPoints);
-
-        //pointsRef.push().setValue(newPoints);
-        //passIntent();
 
         if(googleClient.isConnected()) {
             googleClient.disconnect();
@@ -632,10 +662,6 @@ public class StartWearActivity extends FragmentActivity implements
             startActivity(intent2);
 
 
-        } else if ((running == false) && (createNewRoute == true)) {
-            warningTextView.setText("Press Start to begin");
-            warningTextView.setTextColor(Color.GREEN);
-        } else {
         }
     }
     public void addMarkers(){

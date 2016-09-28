@@ -72,7 +72,6 @@ public class ListenerService extends WearableListenerService {
             intent.putExtra("longitude", map.getDouble("longitude"));
             intent.putExtra("counter", map.getInt("counter"));
             intent.putExtra("point_number", map.getInt("point_number"));
-            Log.v("for loop", "feedback" + map.getInt("feedback"));
             intentList.add(intent);
         }
 

@@ -509,7 +509,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         initializeTimerTask();
 
         //schedule the timer, the TimerTask will run every 1 sec
-        timer.schedule(timerTask, 3000, 1000); //
+        timer.schedule(timerTask, 3000, 3000); //
 
     }
     protected void stopLocationUpdates() {

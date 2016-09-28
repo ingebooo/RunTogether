@@ -265,7 +265,6 @@ public class CustomMapFragment extends Fragment
                     running = true;
                     if (timer == null) {
                         startTimer();
-                        Log.v("startTimer", "jaadaa" + "");
                     }
                 } else if (createNewRoute == true) {
                     warningTextView.setText("Start saved.Now running...");
@@ -821,7 +820,7 @@ public class CustomMapFragment extends Fragment
 
         //schedule the timer, the TimerTask will run every 10sec
         //adding points each second
-            timer.schedule(timerTask, 3000, 1000); //
+            timer.schedule(timerTask, 3000, 3000); //
 
     }
     protected void stopLocationUpdates() {
