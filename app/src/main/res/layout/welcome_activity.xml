@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/running_couple_blurry"
+    android:weightSum="1">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="0.78">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Welcome"
+            android:textSize="40dp"
+            android:id="@+id/welcome"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/stem"/>
+
+        <Button
+            android:layout_width="200dp"
+            android:backgroundTint="@color/stem"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="65dp"
+            android:text="Create new route"
+            android:onClick="createNewRoute"
+            android:id="@+id/new_route_btn"
+            android:background="@drawable/shape"
+            android:textColor="@android:color/white"
+            android:textAllCaps="false"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="200dp"
+            android:backgroundTint="@color/stem"
+            android:textColor="@android:color/white"
+            android:layout_height="wrap_content"
+            android:text="Choose route"
+            android:onClick="chooseRoute"
+            android:id="@+id/choose_route_btn"
+            android:textAllCaps="false"
+            android:background="@drawable/shape"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="center_horizontal" />
+
+        <Button
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/petal"
+            android:textColor="@android:color/white"
+            android:text="Log out"
+            android:textAllCaps="false"
+            android:id="@+id/log_out_btn"
+            android:layout_marginTop="160dp"
+            android:background="@drawable/shape"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+</LinearLayout>

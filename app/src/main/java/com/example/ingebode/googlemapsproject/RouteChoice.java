@@ -65,18 +65,9 @@ public class RouteChoice extends Activity{
         setContentView(R.layout.route_choice);
 
         TextView welcome = (TextView)findViewById(R.id.welcome);
-        welcome.setTypeface(myFontBold);
+        welcome.setTypeface(myFontMedium);
 
-        TextView createNew = (TextView)findViewById(R.id.newRoute);
-        createNew.setTypeface(myFontLight);
 
-        final Button create = (Button)findViewById(R.id.buttonCreateNewRoute);
-        create.setTypeface(myFontLight);
-
-        TextView pick = (TextView)findViewById(R.id.pickEx);
-        pick.setTypeface(myFontLight);
-
-        Intent intent = getIntent();
 
         firebaseRef = new Firebase(Config.FIREBASE_URL);
         Firebase routeRef = firebaseRef.child("routes");
@@ -84,26 +75,25 @@ public class RouteChoice extends Activity{
         list = new ArrayList<String>();
 
         routeList = (ListView)findViewById(R.id.RoutelistView1);
-        usernameTextView = (TextView)findViewById(R.id.name);
+        //usernameTextView = (TextView)findViewById(R.id.name);
 
-
+        Intent intent = getIntent();
         username = intent.getStringExtra("USERNAME");
-
-        usernameTextView.setText(username);
-        usernameTextView.setTypeface(myFontMedium);
-
         user_id = intent.getStringExtra("USER_ID");
 
-        mAdapter = new FirebaseListAdapter<Route>(this, Route.class, R.layout.single_active_list, routeRef) {
+        mAdapter = new FirebaseListAdapter<Route>(this, Route.class, R.layout.custom_list, routeRef) {
             @Override
             protected void populateView(View view, Route r, int i) {
 
-                TextView routeNameView = (TextView) view.findViewById(R.id.text_view_list_name);
+                TextView routeNameView = (TextView) view.findViewById(R.id.route_name);
+                TextView created_by = (TextView) view.findViewById(R.id.created_by);
+                TextView by = (TextView) view.findViewById(R.id.by);
+                created_by.setText(r.getUsername());
+                created_by.setTypeface(myFontLight);
+                by.setTypeface(myFontLight);
+
                 routeNameView.setText(r.getRoute_name());
-                routeNameView.setTypeface(myFontLight);
-                routeNameView.setTextSize(20);
-
-
+                routeNameView.setTypeface(myFontMedium);
 
             }
         };
@@ -163,7 +153,7 @@ public class RouteChoice extends Activity{
         startActivity(intent);
     }
     public void passIntentNewRoute(){
-        Intent intent = new Intent(this, TabsActivity.class);
+        Intent intent = new Intent(this, NewRouteActivity.class);
         intent.putExtra("CREATENEWROUTE", createNewRoute);
         intent.putExtra("ROUTE_NAME", route_name);
         intent.putExtra("USERNAME", username);

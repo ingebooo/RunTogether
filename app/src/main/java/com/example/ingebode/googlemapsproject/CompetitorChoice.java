@@ -69,15 +69,22 @@ public class CompetitorChoice extends Activity {
 
         Firebase ref = new Firebase(Config.FIREBASE_URL).child("routeRelations").child(route_id);
 
-        mAdapter = new FirebaseListAdapter<UserRouteRelation>(this, UserRouteRelation.class, android.R.layout.activity_list_item, ref) {
+        mAdapter = new FirebaseListAdapter<UserRouteRelation>(this, UserRouteRelation.class, R.layout.custom_list, ref) {
             @Override
             protected void populateView(View view, UserRouteRelation ur, int i) {
-                TextView nameView = (TextView) view.findViewById(android.R.id.text1);
+                TextView nameView = (TextView) view.findViewById(R.id.route_name);
+                TextView created_by = (TextView) view.findViewById(R.id.created_by);
+                TextView by = (TextView) view.findViewById(R.id.by);
+                created_by.setText("");
+                by.setText("");
                 nameView.setText(ur.getUsername());
                 nameView.setTypeface(myFontLight);
+                nameView.setTextSize(15);
             }
         };
         listview.setAdapter(mAdapter);
+        listview.setDivider(null);
+        listview.setDividerHeight(0);
 
         myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
         myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");

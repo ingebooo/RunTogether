@@ -8,7 +8,18 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@drawable/running_couple_blurry"
     tools:context="com.example.ingebode.googlemapsproject.StartWearActivity" >
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="Sync with wear"
+        android:background="@drawable/shape"
+        android:backgroundTint="@color/petal"
+        android:textAllCaps="false"
+        android:id="@+id/button"
+        android:layout_gravity="center_horizontal" />
 
     <TextView
         android:id="@+id/warning"
@@ -18,14 +29,7 @@
         android:layout_gravity="center"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:textColor="@color/turkis"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="New Text"
-        android:id="@+id/speed_textview"
-        android:layout_gravity="center_horizontal" />
+        android:textColor="@color/petal"/>
 
     <RelativeLayout
         android:orientation="horizontal"
@@ -40,12 +44,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginLeft="70dp"
+            android:layout_marginLeft="40dp"
             android:layout_marginRight="10dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/shape"
             android:textColor="@android:color/white"
-            android:backgroundTint="@android:color/holo_green_light"
+            android:backgroundTint="@color/spring"
             android:layout_toLeftOf="@+id/centerPoint"
             android:textAllCaps="false"
             android:layout_alignParentLeft="true"
@@ -60,15 +64,15 @@
 
         <Button
             android:id="@+id/stop_btn"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginRight="70dp"
+            android:layout_marginRight="40dp"
             android:layout_marginLeft="10dp"
             android:layout_marginTop="10dp"
             android:background="@drawable/shape"
             android:textColor="@android:color/white"
-            android:backgroundTint="@android:color/holo_red_dark"
+            android:backgroundTint="@color/poppy"
             android:layout_alignParentRight="true"
             android:layout_toRightOf="@+id/centerPoint"
             android:textAllCaps="false"

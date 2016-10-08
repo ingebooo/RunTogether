@@ -24,7 +24,6 @@ public class ListenerService extends WearableListenerService {
     private static final String START_ACTIVITY_PATH = "/start-activity";
     ArrayList<DataMap> pointsList;
     GoogleApiClient mGoogleApiClient;
-    boolean hasDataChanged = false;
 
     @Override
     public void onCreate() {
@@ -44,8 +43,6 @@ public class ListenerService extends WearableListenerService {
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        hasDataChanged = true;
-
         for (DataEvent event : dataEvents) {
 
             // Check the data type
@@ -83,8 +80,8 @@ public class ListenerService extends WearableListenerService {
         dataIntent.putParcelableArrayListExtra("pointsList", intentList);
         LocalBroadcastManager.getInstance(this).sendBroadcast(dataIntent);
     }
-
-    /*@Override
+/*
+    @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         // Check to see if the message is to start an activity
         if (messageEvent.getPath().equals(START_ACTIVITY_PATH)) {

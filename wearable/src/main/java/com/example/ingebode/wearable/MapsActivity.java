@@ -11,6 +11,7 @@ import android.location.Location;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
@@ -46,13 +47,26 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -68,16 +82,19 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
     private GoogleApiClient mGoogleApiClient;
 
     PolylineOptions rectOptions;
-    Polyline line;
+
+    String cords = "";
 
     double current_lat, current_long;
     double newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong;
     double lat1, long1, lat2, long2;
     boolean running = false;
-    int counter = 0;
-    double tempLat = 0;
-    double tempLon = 0;
 
+    double distance;
+    float avg_speed, topSpeed, old_avg, forget;
+
+    Date now;
+    boolean hasConnection = false;
 
     boolean createNewRoute = false;
     private String point_collection_id;
@@ -85,9 +102,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
     ArrayList<Intent> pointData;
-
-    Date startTime;
-    Date endTime;
 
     Handler handler = new Handler();
     MarkerOptions markerOptions3;
@@ -97,6 +111,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
     private ArrayList<Intent> intentList;
 
     int point_number = 0;
+
+    CSVFile csvFile;
+
+    File file;
 
     /**
      * The map. It is initialized when the map has been fully loaded and is ready to be used.
@@ -114,6 +132,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
     int listSize = 0;
     private LocationRequest locationRequest;
     private PendingResult<LocationSettingsResult> result;
+    String WEARABLE_DATA_PATH = "/wearable_data";
 
 
     ArrayList<Point> newPointList;
@@ -123,11 +142,13 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         listPoints = new ArrayList<Point>();
         newPointList = new ArrayList<Point>();
 
+
         pointData = new ArrayList<Intent>();
 
         createNewRoute = false;
 
         running = true;
+        csvFile = new CSVFile(getApplicationContext());
 
         if (!hasGps()) {
             Log.d("tag", "This hardware doesn't have GPS.");
@@ -178,30 +199,15 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-
-
-        // if (createNewRoute == false) {
-        //get points
-        //Draw polyline on map
         getDataFromIntent();
 
-        new CountDownTimer(3000, 1000) {
-
-            public void onTick(long millisUntilFinished) {
-                //here you can have your logic to set text to edittext
-            }
-
-            public void onFinish() {
-                //startTimer();
-                Toast.makeText(getApplicationContext(),
-                        "GOOOO", Toast.LENGTH_SHORT)
-                        .show();
-            }
-
-        }.start();
-
-        //  }
-
+              /* Request user permissions in runtime */
+        ActivityCompat.requestPermissions(MapsActivity.this,
+                new String[]{
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                },
+                100);
 
         // Obtain the MapFragment and set the async listener to be notified when the map is ready.
         MapFragment mapFragment =
@@ -216,7 +222,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         listSize = intentList.get(0).getIntExtra("counter", 0);
         rectOptions = new PolylineOptions();
 
+
+
         for (int i = 0; i < listSize; i++) {
+            Log.v("listSize", listSize + "");
             Point point = new Point(intentList.get(i).getStringExtra("user_id"), intentList.get(i).getStringExtra("route_id"), intentList.get(i).getDoubleExtra("latitude", 0), intentList.get(i).getDoubleExtra("longitude", 0), intentList.get(i).getIntExtra("point_number", 0));
             listPoints.add(point);
 
@@ -235,6 +244,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         point_collection_id = intent.getStringExtra("POINT_COLLECTION_ID");
         username = intent.getStringExtra("username");
         competitor_username = "Ingeborg";
+
     }
 
     @Override
@@ -255,6 +265,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+
         locationRequest = new LocationRequest();
         locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
@@ -270,33 +281,34 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         } else {
 
         }
-        if(LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient) != null){
+        if (LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient) != null) {
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             addMarkers();
             mMap.setMyLocationEnabled(true);
 
         }
-            LocationServices.FusedLocationApi
-                    .requestLocationUpdates(mGoogleApiClient, locationRequest, this)
-                    .setResultCallback(new ResultCallback() {
+        LocationServices.FusedLocationApi
+                .requestLocationUpdates(mGoogleApiClient, locationRequest, this)
+                .setResultCallback(new ResultCallback() {
 
-                        @Override
-                        public void onResult(Result status) {
-                            if (status.getStatus().isSuccess()) {
-                                Log.d("MapsActivity", "Successfully requested location updates");
+                    @Override
+                    public void onResult(Result status) {
+                        if (status.getStatus().isSuccess()) {
+                            Log.d("MapsActivity", "Successfully requested location updates");
 
 
-                            } else {
-                                Log.e("MapsActivity",
-                                        "Failed in requesting location updates, "
-                                                + "status code: "
-                                                + status.getStatus()
-                                                + ", message: "
-                                                + status.getStatus());
-                            }
+                        } else {
+                            Log.e("MapsActivity",
+                                    "Failed in requesting location updates, "
+                                            + "status code: "
+                                            + status.getStatus()
+                                            + ", message: "
+                                            + status.getStatus());
                         }
-                    });
-        }
+                    }
+                });
+    }
+
     @Override
     public void onConnectionSuspended(int i) {
         Log.v("onConnectionSuspended", String.valueOf(i));
@@ -304,6 +316,9 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
     @Override
     public void onLocationChanged(Location location) {
+
+        mLastLocation = location;
+
         if (marker3 == null) {
             marker3 = mMap.addMarker(markerOptions3);
         }
@@ -316,53 +331,23 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         current_long = location.getLongitude();
         marker3.setPosition(new LatLng(current_lat, current_long));
 
-        if(timer == null){
+        if (timer == null) {
+
+            now = new Date();
             startTimer();
         }
 
-        if(running == true){
+        if (running == true) {
             CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(current_lat, current_long)).zoom(17).build();
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
 
-        /*
-
-            if(running == true){
-                //CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(current_lat, current_long)).zoom(17).build();
-                //mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-                Point point = new Point("", "", current_lat, current_long, point_number);
-                newPointList.add(point);
-                point_number++;
-
-                double friendLat = listPoints.get(point_number).getLatitude();
-                double friendLong = listPoints.get(point_number).getLongitude();
-                marker4.setPosition(new LatLng(friendLat, friendLong));
-                Log.v("onLocChanged", "friendLat" + friendLat);
-                Log.v("onLocChanged", "friendLong" + friendLong);
-                Log.v("onLocChanged", "myLat" + current_lat);
-                Log.v("onLocChanged", "myLong" + current_long);
-                Log.v("onLocChanged", "point_number" + point_number);
-
-                marker4.showInfoWindow();
-
-            }*/
         checkProximity();
     }
-    public void checkProximity() {
-        //check if user is close to Start
-       /* if (((Math.abs(current_lat - lat1) > 0.0001) || (Math.abs(current_long - long1) > 0.0001)) && (running == false) && (createNewRoute == false)) {
 
-        } else if ((Math.abs(current_lat - lat1) < 0.0001) && (Math.abs(current_long - long1) < 0.0001) && (running == false) && (createNewRoute == false)) {
-            Toast.makeText(this.getApplicationContext(),
-                    "You can start running!, timer started", Toast.LENGTH_SHORT)
-                    .show();
-            running = true;
-            startTimer();
-            //Set timer
-            //check if user is close to finish */
-       // }
-    if ((Math.abs(current_lat - lat2) < 0.0001) && (Math.abs(current_long - long2) < 0.0001) && (running == true) && (createNewRoute == false)) {
+    public void checkProximity() {
+
+        if ((Math.abs(current_lat - lat2) < 0.0001) && (Math.abs(current_long - long2) < 0.0001) && (running == true) && (point_number >= listPoints.size())) {
             Toast.makeText(this.getApplicationContext(),
                     "Route completed", Toast.LENGTH_SHORT)
                     .show();
@@ -376,25 +361,16 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                 stopLocationUpdates();
                 mGoogleApiClient.disconnect();
 
-                Intent intent = new Intent(this, FinishActivity.class);
-                startActivity(intent);
+                passIntent();
             }
-
-            //writeToHistory();
-        } else if ((running == false) && (createNewRoute == true)) {
-           /* warningTextView.setText("Press Start to begin");
-            warningTextView.setTextColor(Color.GREEN);
-            startButton.setEnabled(true);
-            stopButton.setEnabled(false);
-            startButton.setAlpha(1);
-            stopButton.setAlpha(1);*/
-       } else {
-       }
-   }
+        }
+    }
 
     @Override
     public void onMapLongClick(LatLng latLng) {
         // Display the dismiss overlay with a button to exit this activity.
+        stopLocationUpdates();
+        mGoogleApiClient.disconnect();
         mDismissOverlay.show();
         stopLocationUpdates();
     }
@@ -403,28 +379,19 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS);
     }
 
-    /*
-    @Override
-    public void onEnterAmbient (Bundle ambientDetails){
-        MapFragment mf = new MapFragment();
-        mf.onEnterAmbient(ambientDetails);
-    }
-    @Override
-    public void onExitAmbient(){
-        MapFragment mf = new MapFragment();
-        mf.onExitAmbient();
-    }*/
     @Override
     public void onMapReady(GoogleMap googleMap) {
         //GoogleMapOptions gm = new GoogleMapOptions();
-       // gm.ambientEnabled(true);
+        // gm.ambientEnabled(true);
         // Map is ready to be used.
+
         mMap = googleMap;
         // Set the long click listener as a way to exit the map.
         mMap.setOnMapLongClickListener(this);
 
     }
-    public void addMarkers(){
+
+    public void addMarkers() {
         markerOptions3 = new MarkerOptions().position(new LatLng(current_lat, current_long)).title("You are here");
         BitmapDescriptor icon2 = BitmapDescriptorFactory.fromResource(R.drawable.ingeborg);
 
@@ -447,10 +414,10 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
             mMap.addMarker(markerOptions1);
             mMap.addMarker(markerOptions2);
             //moving camera to current position
-                if(running == false) {
-                    CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(lat1, long1)).zoom(17).build();
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                }
+            if (running == false) {
+                CameraPosition cameraPosition = new CameraPosition.Builder().target(new LatLng(lat1, long1)).zoom(17).build();
+                mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+            }
 
             mMap.addPolyline(rectOptions);
         } else if (createNewRoute == true) {
@@ -458,18 +425,20 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom((new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())), 17));
         }
-        if(mMap == null) {
+        if (mMap == null) {
             Toast.makeText(this.getApplicationContext(),
                     "Sorry! unable to create maps", Toast.LENGTH_SHORT)
                     .show();
         }
     }
+
     private boolean isAhead(double latitude, double longitude) {
         double a = calcDistance(lat1, long1, current_lat, current_long);
         double b = calcDistance(lat1, long1, latitude, longitude);
         if (a > b) return true;
         else return false;
     }
+
     private double calcDistance(double latitude1, double longitude1, double latitude2, double longitude2) {
         double earthRadius = 6373;
         double dLat = Math.toRadians(latitude2 - latitude1);
@@ -482,6 +451,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         return dist;
     }
 
+
     private String getDate() {
         //Get date
         Calendar calendar = Calendar.getInstance();
@@ -489,8 +459,9 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         final String date = simpleDateFormat.format(calendar.getTime());
         return date;
     }
+
     public void onDestroy() {
-        if(running == true) {
+        if (running == true) {
             mGoogleApiClient.disconnect();
             stopLocationUpdates();
         }
@@ -500,24 +471,53 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         }
         super.onDestroy();
     }
+
+    public void sendFile() {
+        // Read the text file into a byte array
+
+        Log.v("sendFile", "file sent");
+
+        FileInputStream fileInputStream = null;
+        byte[] bFile = new byte[(int) file.length()];
+        try {
+            fileInputStream = new FileInputStream(file);
+            fileInputStream.read(bFile);
+            fileInputStream.close();
+        } catch (Exception e) {
+        }
+
+        // Create an Asset from the byte array, and send it via the DataApi
+        Asset asset = Asset.createFromBytes(bFile);
+        PutDataMapRequest dataMap = PutDataMapRequest.create("/txt");
+        dataMap.getDataMap().putAsset("com.example.company.key.TXT", asset);
+        PutDataRequest request = dataMap.asPutDataRequest();
+
+        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
+                .putDataItem(mGoogleApiClient, request);
+
+        request.setUrgent();
+    }
+
     public void startTimer() {
         //set a new Timer
         running = true;
         timer = new Timer();
 
+        System.out.println("timer started");
+
+
         //initialize the TimerTask's job
         initializeTimerTask();
 
-        //schedule the timer, the TimerTask will run every 1 sec
-        timer.schedule(timerTask, 3000, 3000); //
+        //schedule the timer, the TimerTask will run every 5 sec
+        timer.schedule(timerTask, 3000, 3500); //
 
     }
+
     protected void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
     }
-
-
 
     public void initializeTimerTask() {
         Toast.makeText(this.getApplicationContext(),
@@ -534,14 +534,53 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                 handler.post(new Runnable() {
                     public void run() {
 
-                        if(running == true) {
+                        if (running == true) {
+
                             Point point = new Point("", "", current_lat, current_long, point_number);
                             newPointList.add(point);
-                            point_number++;
+                            //cords += (current_lat + "," + current_long+ "\n");
 
-                            if(listPoints.size() > point_number) {
+                            point_number++;
+                            Log.v("point_number: ", point_number + "");
+
+
+                            old_avg = avg_speed;
+                            avg_speed = (newPointList.size() * old_avg - forget * mLastLocation.getSpeed());
+                            forget = mLastLocation.getSpeed();
+
+                            if(topSpeed == 0){
+                                topSpeed = mLastLocation.getSpeed();
+                            } else if (mLastLocation.getSpeed() > topSpeed){
+                                topSpeed = mLastLocation.getSpeed();
+                            }
+
+                            if(point_number == 2){
+                                distance = Math.floor(calcDistance(lat1, long1, lat2, long2) * 100) / 100;
+
+                                Date endTime = new Date();
+                                long diff = endTime.getTime() - now.getTime();
+                                SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+                                sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+                                String time = sdt.format(new Date(diff));
+
+                                long nTime = now.getTime();
+
+                                cords = nTime + "," + distance + "," + time + "," + avg_speed *3600/1000 + "," + topSpeed *3600/1000;
+
+
+                                passIntent();
+                                System.out.println("passIntent()");
+
+                                /*
+                                writePointsToFile(cords);
+                                sendFile();
+                                System.out.println("file sent");*/
+                            }
+
+
+                            if (listPoints.size() > point_number) {
                                 Log.v("listpoint.size: ", listPoints.size() + "");
-                                Log.v("point_number: ", point_number + "");
+
 
                                 double friendLat = listPoints.get(point_number).getLatitude();
                                 double friendLong = listPoints.get(point_number).getLongitude();
@@ -549,31 +588,82 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                                 marker4.showInfoWindow();
                             }
                         }
-                        /*
-
-
-                        //show competitor route only if createNewRoute==false and feedback==4
-                        if ((createNewRoute == false) && (feedback == 4)) {
-                            if (marker4 == null) {
-                                marker4 = mMap.addMarker(markerOptions4);
-                            }
-
-                            if (counter < listPoints.size()) {
-
-                                double latitude = listPoints.get(counter).getLatitude();
-                                Log.v("timertask: latitude: ", "ad" + latitude);
-                                double longitude = listPoints.get(counter).getLongitude();
-                                Log.v("timertask: lonitude: ", "ad" + longitude);
-                                counter++;
-                                Log.v("counter", counter + "");
-                                marker4.setPosition(new LatLng(latitude, longitude));
-                                marker4.showInfoWindow();
-
-                            }
-                        }*/
                     }
+
                 });
             }
         };
     }
+
+    public void passIntent(){
+
+        timer.cancel();
+        Intent intent = new Intent(this, FinishActivity.class);
+        intent.putExtra("cords", cords);
+
+
+        Log.v("MapsActivity", "cords: " + cords);
+
+        startActivity(intent);
+    }
+
+    /*
+
+    public void createFile() throws IOException {
+        Log.v("creaeFile", "file created");
+        File sdcard = Environment.getExternalStorageDirectory();
+        File dir = new File(sdcard.getAbsolutePath() + "/MyAppFolder/");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        } // Create folder if needed
+
+        file = new File(dir, "test.txt");
+
+        if (file.exists()) {
+            file.delete();
+        }
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writePointsToFile(String data) {
+
+        try {
+            createFile();
+            Date now = new Date();
+            FileOutputStream fOut = new FileOutputStream(file);
+            PrintStream ps = new PrintStream(fOut);
+            ps.println(data);
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("File not found");
+            e.printStackTrace();
+        }
+    }
+    public void readFile(){
+        File sdcard = Environment.getExternalStorageDirectory();
+        File dir = new File(sdcard.getAbsolutePath() + "/MyAppFolder/");
+        if (!dir.exists()) { dir.mkdirs(); } // Create folder if needed
+        System.out.print("readFile");
+        // Read data from the Asset and write it to a file on external storage
+        final File file = new File(dir, "test.txt");
+
+        try (FileInputStream fis = new FileInputStream(file)) {
+
+            int content;
+            while ((content = fis.read()) != -1) {
+                // convert to char and display it
+                System.out.print((char) content);
+            }
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }*/
 }

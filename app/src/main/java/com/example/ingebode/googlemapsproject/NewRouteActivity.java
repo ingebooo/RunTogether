@@ -1,20 +1,27 @@
 package com.example.ingebode.googlemapsproject;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,11 +42,13 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.*;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
@@ -49,6 +58,10 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -77,26 +90,37 @@ public class NewRouteActivity extends FragmentActivity implements
     Button fillArray;
 
     Handler handler = new Handler();
+
+    PolylineOptions rectOptions;
+
     Timer timer;
 
     MarkerOptions markerOptions3;
     double current_lat, current_long;
 
+    String distanceString = "";
+
     Marker marker3;
+
+    float distance = 0;
+
+    double hannaStartLat, hannaStartLong, hannaFinishLat, hannaFinishLong;
 
     double newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong;
 
 
-    float topSpeed = 0;
-    float avg_speed = 0;
-    float old_avg = 0;
-    float forget = 0;
+    float topSpeed;
+    float avg_speed;
+    float old_avg;
+    float forget;
 
     private LocationRequest locationRequest;
     private Location mLastLocation;
     boolean running = false;
 
     int point_number= 0;
+
+    String cords = "";
 
     private List<Route.Point> newPoints = new ArrayList<>();
 
@@ -109,14 +133,14 @@ public class NewRouteActivity extends FragmentActivity implements
     Firebase routeRef;
     Firebase newRouteRef;
     Firebase newPointCollection;
-    Firebase pointRef;
+    Firebase pointRef2 = new Firebase(Config.POINTS_URL);
     Firebase pointsRef = new Firebase(Config.POINTS_URL);
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     
     String user_id, competitor_id, route_id;
-    String route_name, competitor_username, username;
-    boolean createNewRoute = false;
+    String route_name, username;
+    boolean createNewRoute = true;
     int feedback;
     private String point_collection_id;
     double lat1, long1, lat2, long2;
@@ -129,7 +153,7 @@ public class NewRouteActivity extends FragmentActivity implements
     private int timesBeside, timesInfront, timesBehind;
 
     TextView speed;
-
+    private File file;
 
 
     @Override
@@ -158,10 +182,8 @@ public class NewRouteActivity extends FragmentActivity implements
         startButton = (Button)findViewById(R.id.start_btn);
         startButton.setTypeface(myFontLight);
 
-        speed = (TextView)findViewById(R.id.speed_textview);
-        speed.setText("");
-
         stopButton = (Button)findViewById(R.id.stop_btn);
+
         
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,53 +191,131 @@ public class NewRouteActivity extends FragmentActivity implements
 
                 Toast.makeText(getApplicationContext(), "Stopped recording route", Toast.LENGTH_SHORT).show();
 
+                //writePointsToFile(cords);
+
                 stopLocationUpdates();
                 mGoogleApiClient.disconnect();
 
                 lat2 = current_lat;
                 long2 = current_long;
                 running = false;
+
                 //stop the timer, if it's not already null
                 if (timer != null) {
                     timer.cancel();
                     timer = null;
                 }
-                    Date endTime = new Date();
-                    long diff = endTime.getTime() - now.getTime();
+                Date endTime = new Date();
+                long diff = endTime.getTime() - now.getTime();
 
 
-                    SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
-                    sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+                SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+                sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 
-                    String dateString = sdt.format(new Date(diff));
+                String dateString = sdt.format(new Date(diff));
 
-                    warningTextView.setText("Route saved!");
-                    warningTextView.setTextColor(Color.GREEN);
-                    startButton.setEnabled(false);
-                    stopButton.setEnabled(false);
-                    startButton.setAlpha(.5f);
-                    stopButton.setAlpha(.5f);
-                    newRouteFinishLat = current_lat;
-                    newRouteFinishLong = current_long;
-
-                    Map<String, Object> map = new HashMap<String, Object>();
-                    map.put("finish_latitude", newRouteFinishLat);
-                    map.put("finish_longitude", newRouteFinishLong);
-
-                    map.put("time", dateString);
+                //double distance = 0;
+                //Calculate distance(in km) from latitude & longitude
 
 
-                    //trenger null sjekk
-                    if(newRouteRef != null) {
-                        newRouteRef.updateChildren(map);
-                    }
+                distanceString = Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100 + "";
 
-                    writeToHistory();
+                warningTextView.setText("Route saved!");
+                warningTextView.setTextColor(Color.GREEN);
+                startButton.setEnabled(false);
+                stopButton.setEnabled(false);
+                startButton.setAlpha(.5f);
+                stopButton.setAlpha(.5f);
+                newRouteFinishLat = current_lat;
+                newRouteFinishLong = current_long;
+
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put("finish_latitude", newRouteFinishLat);
+                map.put("finish_longitude", newRouteFinishLong);
+                map.put("distance", distance + "");
 
 
+                map.put("time", dateString);
+
+
+                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(NewRouteActivity.this);
+                LayoutInflater inflater = (NewRouteActivity.this).getLayoutInflater();
+
+                final View dialogView = inflater.inflate(R.layout.custom_dialog, null);
+                final EditText input = (EditText) dialogView.findViewById(R.id.editTextRouteName);
+                final Button okBtn = (Button)dialogView.findViewById(R.id.dialog_btn);
+                final TextView routeText = (TextView)dialogView.findViewById(R.id.route_finish);
+                final TextView routeText2 = (TextView)dialogView.findViewById(R.id.enter_route_name);
+
+
+
+                routeText.setTypeface(myFontLight);
+                routeText2.setTypeface(myFontLight);
+                okBtn.setTypeface(myFontLight);
+                dialogBuilder.setView(dialogView);
+
+                route_name = input.getText().toString();
+                if (newRouteRef != null) {
+                    newRouteRef.updateChildren(map);
                 }
+                //map.put("route_name", route_name);
+
+
+
+
+                okBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        route_name = input.getText().toString();
+
+
+                        writeToHistory();
+                        passIntent();
+
+                    }
+                });
+
+                AlertDialog b = dialogBuilder.create();
+                b.show();
+
+            }
         });
+
+
+        rectOptions = new PolylineOptions();
+
+
+            rectOptions.add(new LatLng(63.42796855, 10.40603855));
+            rectOptions.add(new LatLng(63.42788217, 10.40732601));
+            rectOptions.add(new LatLng(63.42899558, 10.4074333));
+
+            rectOptions.add(new LatLng(63.42928617, 10.40759325));
+
+            rectOptions.add(new LatLng(63.43058668, 10.41123033));
+            rectOptions.add(new LatLng(63.43139767, 10.41336536));
+            rectOptions.add(new LatLng(63.43084582, 10.41453481));
+            rectOptions.add(new LatLng(63.43183435, 10.41670203));
+            rectOptions.add(new LatLng(63.43238138, 10.4155755));
+            rectOptions.add(new LatLng(63.43485731, 10.42096138));
+            rectOptions.add(new LatLng(63.43527474, 10.41827917));
+            rectOptions.add(new LatLng(63.43210786, 10.41055441));
+            rectOptions.add(new LatLng(63.43160881, 10.41158438));
+            rectOptions.add(new LatLng(63.4296169, 10.4065531));
+
+
+
+
+
+
+                        hannaStartLat = 63.42796855;
+                        hannaStartLong = 10.40603855;
+
+
+                        hannaFinishLat =63.4296169;
+                        hannaFinishLong = 10.4065531;
+
 
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -239,8 +339,9 @@ public class NewRouteActivity extends FragmentActivity implements
 
                     addRoute(newRouteStartLat, newRouteStartLong, 0, 0, route_name, "");
 
-                    if (timer == null) {
+                if (timer == null) {
                         startTimer();
+                    Log.v("timer", "started" + "");
                     }
                 }
         });
@@ -255,28 +356,17 @@ public class NewRouteActivity extends FragmentActivity implements
     public void getDataFromIntent() {
         Intent intent = this.getIntent();
         user_id = intent.getStringExtra("USER_ID");
-        lat1=intent.getDoubleExtra("LAT1", 0);
-        long1=intent.getDoubleExtra("LONG1", 0);
-        lat2=intent.getDoubleExtra("LAT2", 0);
-        long2=intent.getDoubleExtra("LONG2", 0);
-        competitor_id = intent.getStringExtra("COMPETITOR_ID");
-        route_id = intent.getStringExtra("ROUTE_ID");
-        createNewRoute = intent.getExtras().getBoolean("CREATENEWROUTE");
-        route_name = intent.getStringExtra("ROUTE_NAME");
-        feedback = intent.getExtras().getInt("FEEDBACK");
-        point_collection_id = intent.getStringExtra("POINT_COLLECTION_ID");
         username = intent.getStringExtra("USERNAME");
-        competitor_username = intent.getStringExtra("COMPETITOR_USERNAME");
-
     }
 
+    /*
     // Send a data object when the data layer connection is successful.    @Override
     protected void onStop() {
         if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
             mGoogleApiClient.disconnect();
         }
         super.onStop();
-    }
+    }*/
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
@@ -365,9 +455,12 @@ public class NewRouteActivity extends FragmentActivity implements
     @Override
     public void onLocationChanged(Location location) {
 
+        mLastLocation = location;
+
         if (marker3 == null) {
             marker3 = mMap.addMarker(markerOptions3);
         }
+
         current_lat = location.getLatitude();
         current_long = location.getLongitude();
         marker3.setPosition(new LatLng(current_lat, current_long));
@@ -392,7 +485,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
         newRouteRef = routeRef.push();
 
-        Route route = new Route("", point_collection_id, startLat, startLong, finishLat, finishLong, route_name, "");
+        Route route = new Route("", point_collection_id, startLat, startLong, finishLat, finishLong, route_name, "", username, 0);
 
         newRouteRef.setValue(route);
 
@@ -403,11 +496,47 @@ public class NewRouteActivity extends FragmentActivity implements
 
     }
 
+    public void createFile() throws IOException {
+        Log.v("creaeFile", "file created");
+        File sdcard = Environment.getExternalStorageDirectory();
+        File dir = new File(sdcard.getAbsolutePath() + "/MyAppFolder/");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        } // Create folder if needed
+
+        file = new File(dir, "test.txt");
+
+        if (file.exists()) {
+            file.delete();
+        } else {
+            file.createNewFile();
+        }
+    }
+
+    public void writePointsToFile(String data) {
+
+        try {
+            Date now = new Date();
+            long nTime = now.getTime();
+            FileOutputStream fOut = new FileOutputStream(file);
+            PrintStream ps = new PrintStream(fOut);
+            ps.println("Time = " + Long.toString(nTime)); // A value that changes each time
+
+            //ps.println(user_id.getBytes());
+            ps.println(data);
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("File not found");
+            e.printStackTrace();
+        }
+    }
+
     public void startTimer(){
         timer = new Timer();
         checkCounter();
 
-        timer.schedule(timerTask, 3000, 1000);
+
+        timer.schedule(timerTask, 3000, 3500);
     }
     public void checkCounter() {
         timerTask = new TimerTask() {
@@ -415,16 +544,138 @@ public class NewRouteActivity extends FragmentActivity implements
                 handler.post(new Runnable() {
                     public void run() {
                         if (running == true) {
+
                             Route.Point point = new Route.Point(user_id, route_id, current_lat, current_long, 0, point_number);
+                            newPoints.add(point);
+
+                            float[] results = new float[1];
+
+                            Log.v("point number ", "" + point_number);
+
+
+                            if(point_number > 0) {
+                                Location.distanceBetween(newPoints.get(point_number - 1).getLatitude(), newPoints.get(point_number - 1).getLongitude(), point.getLatitude(), point.getLongitude(), results);
+                                System.out.print("point_number - 1" + (point_number - 1));
+                            }
+
+
+
                             point_number++;
 
-                            newPoints.add(point);
-                            //addPoint(current_lat, current_long);
+                            distance += results[0];
+                            Log.v("distance ", "" + distance);
+
                             Toast.makeText(getApplicationContext(), "Point added to list", Toast.LENGTH_SHORT).show();
 
-                            old_avg = avg_speed;
+
+
+                            /*
+                            if(old_avg == 0){
+                                old_avg = mLastLocation.getSpeed();
+                            } else {
+                                old_avg = avg_speed;
+                            }
                             avg_speed = (newPoints.size() * old_avg - forget * mLastLocation.getSpeed());
                             forget = mLastLocation.getSpeed();
+
+
+*/
+
+                            if(newPoints.size() == 350){
+                                Toast.makeText(getApplicationContext(), "Stopped recording route", Toast.LENGTH_SHORT).show();
+
+                                //writePointsToFile(cords);
+
+                                writeToHistory();
+                                passIntent();
+
+                                stopLocationUpdates();
+                                mGoogleApiClient.disconnect();
+
+                                lat2 = current_lat;
+                                long2 = current_long;
+                                running = false;
+
+
+                                //stop the timer, if it's not already null
+                                if (timer != null) {
+                                    timer.cancel();
+                                    timer = null;
+                                }
+                                Date endTime = new Date();
+                                long diff = endTime.getTime() - now.getTime();
+
+
+                                SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+                                sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+
+                                String dateString = sdt.format(new Date(diff));
+
+                                //double distance = 0;
+                                //Calculate distance(in km) from latitude & longitude
+                                distanceString = ""+ Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100;
+
+                                avg_speed = (float) (Math.floor((360 * distance) / newPoints.size()) * 35 / 35);
+
+                                warningTextView.setText("Route saved!");
+                                warningTextView.setTextColor(Color.GREEN);
+                                startButton.setEnabled(false);
+                                stopButton.setEnabled(false);
+                                startButton.setAlpha(.5f);
+                                stopButton.setAlpha(.5f);
+                                newRouteFinishLat = current_lat;
+                                newRouteFinishLong = current_long;
+
+                                Map<String, Object> map = new HashMap<String, Object>();
+                                map.put("finish_latitude", newRouteFinishLat);
+                                map.put("finish_longitude", newRouteFinishLong);
+
+                                map.put("distance", distance + " distance2: " + distanceString);
+                                map.put("time", dateString);
+
+
+                                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(NewRouteActivity.this);
+                                LayoutInflater inflater = (NewRouteActivity.this).getLayoutInflater();
+
+                                final View dialogView = inflater.inflate(R.layout.custom_dialog, null);
+                                final EditText input = (EditText) dialogView.findViewById(R.id.editTextRouteName);
+                                final Button okBtn = (Button)dialogView.findViewById(R.id.dialog_btn);
+                                final TextView routeText = (TextView)dialogView.findViewById(R.id.route_finish);
+                                final TextView routeText2 = (TextView)dialogView.findViewById(R.id.enter_route_name);
+
+
+
+                                routeText.setTypeface(myFontLight);
+                                routeText2.setTypeface(myFontLight);
+                                okBtn.setTypeface(myFontLight);
+                                dialogBuilder.setView(dialogView);
+
+                                route_name = input.getText().toString();
+                                if (newRouteRef != null) {
+                                    newRouteRef.updateChildren(map);
+                                }
+                                //map.put("route_name", route_name);
+
+
+
+
+                                okBtn.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+
+                                        route_name = input.getText().toString();
+
+
+                                        writeToHistory();
+                                        passIntent();
+
+                                    }
+                                });
+
+                                AlertDialog b = dialogBuilder.create();
+                                b.show();
+                            }
                         }
                     }
                 });
@@ -461,17 +712,11 @@ public class NewRouteActivity extends FragmentActivity implements
         sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
         String time = sdt.format(new Date(diff));
 
-        double distance = 0;
-        //Calculate distance(in km) from latitude & longitude
-        distance = Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100;
-
-
-        //Calculate Average Speed (in km/hr) calculated with point period of 10 secs
-        //avg_speed = Math.floor((360 * distance) / newPoints.size()) * 100 / 100;
-
         //TODO: add time here
 
-        History history = new History(user_id, route_id, distance, avg_speed,topSpeed * 3600/1000, time);
+        History history = new History(user_id, route_id, distance + "", avg_speed + "",topSpeed+ "", time);
+
+       // * 3600/1000
 
         Firebase historyRef = new Firebase(Config.HISTORY_URL);
         historyRef.push().setValue(history);
@@ -484,8 +729,6 @@ public class NewRouteActivity extends FragmentActivity implements
         //Google Analytics
       /*  Tracker t = ((fitnessApp) getApplication()).getTracker(fitnessApp.TrackerName.APP_TRACKER);
         t.send(new HitBuilders.EventBuilder().setCategory("Achievement").setAction("Finish Route").setLabel("Finish").build()); */
-
-        passIntent();
 
         if(mGoogleApiClient.isConnected()) {
             stopLocationUpdates();
@@ -520,7 +763,7 @@ public class NewRouteActivity extends FragmentActivity implements
         intent2.putExtra("ROUTE_ID", route_id);
         intent2.putExtra("CREATENEWROUTE", createNewRoute);
         intent2.putExtra("ROUTE_NAME", route_name);
-        intent2.putExtra("FEEDBACK", feedback);
+        intent2.putExtra("NEWROUTEREF", newRouteRef.toString());
         intent2.putExtra("USERNAME", username);
         startActivity(intent2);
     }
@@ -528,9 +771,30 @@ public class NewRouteActivity extends FragmentActivity implements
         markerOptions3 = new MarkerOptions().position(new LatLng(current_lat, current_long)).title("You are here");
         Log.v("you are here", mLastLocation.getLatitude() + "lats og long " + mLastLocation.getLongitude());
 
+
+        MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(hannaStartLat, hannaStartLong)).title("Start");
+        MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(63.4296169, 10.4065531)).title("Finish");
+
+        Log.v("markerOptions2)", markerOptions2.toString() + "");
+
+
+        //markerOptions4.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+
+
+       // rectOptions.add(new LatLng(63.4296169, 10.4065531));
+
+        markerOptions1.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        markerOptions2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+
+        mMap.addMarker(markerOptions1);
+        mMap.addMarker(markerOptions2);
+
         markerOptions3.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
 
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom((new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())), 17));
+
+        Log.v("rectOptions: ", rectOptions.getPoints().size() + "");
+        mMap.addPolyline(rectOptions);
 
         if(mMap == null) {
             Toast.makeText(this.getApplicationContext(),

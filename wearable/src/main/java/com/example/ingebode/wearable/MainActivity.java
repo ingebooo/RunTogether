@@ -147,6 +147,7 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             pointList.add(p);
         }
     }
+
     public class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -154,7 +155,6 @@ public class MainActivity extends Activity implements GoogleApiClient.Connection
             counter = intent.getIntExtra("counter", 0);
             competitor_username = intent.getStringExtra("competitor_username");
             feedback = intent.getExtras().getInt("feedback");
-            Log.v("MainActivity", "intentList.size" + intentList.size());
             readyToRun = true;
 
             text.setText("Ready to run");

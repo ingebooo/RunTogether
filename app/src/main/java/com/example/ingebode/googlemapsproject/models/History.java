@@ -4,12 +4,12 @@ public class History {
     //private int history_id;
     private String user_id;
     private String route_id;
-    private double distance;
-    private double avg_speed;
-    double topSpeed;
+    private String distance;
+    private String avg_speed;
+    String topSpeed;
     String time;
 
-    public History(String user_id,String route_id, double distance,double avg_speed, double topSpeed, String time){
+    public History(String user_id,String route_id, String distance, String avg_speed, String topSpeed, String time){
         this.user_id=user_id;
         this.route_id=route_id;
         this.distance=distance;
@@ -27,14 +27,14 @@ public class History {
         return user_id;
     }
 
-    public double getDistance(){
+    public String getDistance(){
         return distance;
     }
 
-    public double getAvg_speed(){
+    public String getAvg_speed(){
         return avg_speed;
     }
-    public double getTopSpeed (){
+    public String getTopSpeed (){
         return topSpeed;
     }
     public String getTime(){

@@ -17,9 +17,8 @@
         android:paddingBottom="20dp"
         android:id="@+id/text"
         android:text="Please choose friend to run with:"
-        android:textColor="@color/turkis"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textColor="@color/stem"
+        android:textSize="30sp" />
 
     <ListView
         android:id="@+id/UserlistView1"

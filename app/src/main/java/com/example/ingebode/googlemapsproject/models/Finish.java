@@ -4,15 +4,20 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.Typeface;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.example.ingebode.R;
 import com.example.ingebode.googlemapsproject.RouteChoice;
+import com.example.ingebode.googlemapsproject.Welcome_activity;
+import com.firebase.client.Firebase;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,15 +27,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ingebode on 15/03/16.
  */
 public class Finish extends Activity {
-        String user_id,route_id, username;
+        String user_id,route_id, username, route_name;
         int user_repetition;
         boolean createNewRoute;
+    Typeface myFontMedium;
+    Typeface myFontLight;
+    Typeface myFontBold;
+    Button exit, returnBtn;
+    TextView goodJob;
+
+    Firebase newRouteRef;
+    String ref;
         ProgressDialog progressDialog;
 
         @Override
@@ -38,20 +53,25 @@ public class Finish extends Activity {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_finish);
 
-            MediaPlayer mp = new MediaPlayer();
-            AssetFileDescriptor descriptor;
-            try {
-                descriptor = getAssets().openFd("applause.wav");
-                mp.setDataSource( descriptor.getFileDescriptor(),descriptor.getStartOffset(), descriptor.getLength() );
-                descriptor.close();
-                mp.prepare();
-                mp.start();
-            } catch (IOException e) {
-                Toast.makeText(getApplicationContext(), "Can't play audio file!", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
+            myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
+            myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
+            myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
+
+            returnBtn = (Button)findViewById(R.id.return_btn);
+            returnBtn.setTypeface(myFontLight);
+
+            goodJob = (TextView)findViewById(R.id.goodJob);
+            goodJob.setTypeface(myFontMedium);
 
             getDataFromIntent();
+
+            if(createNewRoute == true) {
+                newRouteRef = new Firebase(ref);
+
+                Map<String, Object> map = new HashMap<String, Object>();
+                map.put("route_name", route_name);
+                newRouteRef.updateChildren(map);
+            }
         }
 
     public void getDataFromIntent(){
@@ -61,12 +81,14 @@ public class Finish extends Activity {
         createNewRoute=intent.getExtras().getBoolean("CREATENEWROUTE");
         user_repetition = intent.getExtras().getInt("REPETITION");
         username = intent.getStringExtra("USERNAME");
+        ref = intent.getStringExtra("NEWROUTEREF");
+        route_name = intent.getStringExtra("ROUTE_NAME");
     }
 
 
     //if user presses the Return to Login button
     public void returnToLogin(View v){
-        Intent intent = new Intent(this, RouteChoice.class);
+        Intent intent = new Intent(this, Welcome_activity.class);
         intent.putExtra("USERNAME", username);
         intent.putExtra("USER_ID", user_id);
         startActivity(intent);

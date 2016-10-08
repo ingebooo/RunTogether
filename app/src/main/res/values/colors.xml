@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="grey">#EDEEEF</color>
+    <color name="red">#F20075</color>
+    <color name="green">#32B92D</color>
+    <color name="pink">#FF6EB0</color>
+    <color name="lilla">#93228D</color>
+
+
+    <color name="petal">#f98866</color>
+    <color name="poppy">#ff420e</color>
+    <color name="stem">#80bd9e</color>
+    <color name="spring">#89da59</color>
+
+
     <color name="dark_green">#388E3C</color>
     <color name="dark_grey">#AEAEAE</color>
     <color name="colorAccent">#DF4A32</color>

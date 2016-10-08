@@ -13,13 +13,13 @@ public class Route {
     private String time;
     String description;
     private String point_collection_id, username;
-    //private Map<String, Object> runnedByMap;
+    double distance;
 
     public Route(){
 
     }
 
-    public Route(String route_id, String point_collection_id, double start_latitude, double start_longitude, double finish_latitude, double finish_longitude, String route_name, String time){
+    public Route(String route_id, String point_collection_id, double start_latitude, double start_longitude, double finish_latitude, double finish_longitude, String route_name, String time, String username, double distance){
         this.route_id=route_id;
         this.start_latitude=start_latitude;
         this.start_longitude=start_longitude;
@@ -28,19 +28,11 @@ public class Route {
         this.route_name = route_name;
         this.point_collection_id = point_collection_id;
         this.time = time;
-        //this.username = username;
+        this.username = username;
+        this.distance = distance;
 
     }
 
-/*	public Route(double start_latitude,double start_longitude,double finish_latitude,double finish_longitude,String description){
-		this.start_latitude=start_latitude;
-		this.start_longitude=start_longitude;
-		this.finish_latitude=finish_latitude;
-		this.finish_longitude=finish_longitude;
-		this.description=description;
-    public Map<String, Object> getRunnedByMap(){
-        return runnedByMap;
-    }*/
     public String getUsername(){
         return this.username;
     }
@@ -66,6 +58,10 @@ public class Route {
 
     public double getFinish_longitude(){
         return finish_longitude;
+    }
+
+    public double getDistance() {
+        return distance;
     }
 
     public String getRoute_name(){

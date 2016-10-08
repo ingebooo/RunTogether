@@ -14,4 +14,9 @@
     <color name="lysGraa">#F0F0F0</color>
     <color name="morkGraa">#9D9D9D</color>
 
+    <color name="petal">#f98866</color>
+    <color name="poppy">#ff420e</color>
+    <color name="stem">#80bd9e</color>
+    <color name="spring">#89da59</color>
+
 </resources>

@@ -7,33 +7,42 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.myapps.fitnessApp.Finish" >
+    android:background="@drawable/running_couple_blurry">
 
     <TextView
         android:layout_width="wrap_content"
+        android:id="@+id/goodJob"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:paddingBottom="100dp"
         android:text="Good job!"
-        android:textColor="#ff4c00"
+        android:textColor="@color/stem"
         android:textSize="40sp"
         android:textStyle="bold" />
 
     <Button
-        android:id="@+id/buttonReturnToLogin"
-        android:layout_width="wrap_content"
+        android:id="@+id/return_btn"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="70dp"
         android:layout_gravity="center"
+        android:background="@drawable/shape"
         android:onClick="returnToLogin"
-        android:text="Return to login"/>
+        android:backgroundTint="@color/stem"
+        android:textColor="@android:color/white"
+        android:textAllCaps="false"
+        android:text="Return to home page"/>
 
     <Button
-        android:id="@+id/buttonExit2"
-        android:layout_width="wrap_content"
+        android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="50dp"
-        android:onClick="exitApp2"
-        android:text="Exit App"/>
+        android:backgroundTint="@color/petal"
+        android:textColor="@android:color/white"
+        android:text="Log out"
+        android:textAllCaps="false"
+        android:id="@+id/log_out_btn"
+        android:layout_marginTop="200dp"
+        android:background="@drawable/shape"
+        android:layout_gravity="center_horizontal" />
 
 </LinearLayout>

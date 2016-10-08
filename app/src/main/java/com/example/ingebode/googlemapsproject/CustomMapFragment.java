@@ -377,7 +377,7 @@ public class CustomMapFragment extends Fragment
 
         newRouteRef = routeRef.push();
 
-        Route route = new Route("", point_collection_id, startLat, startLong, finishLat, finishLong, route_name, "");
+        Route route = new Route("", point_collection_id, startLat, startLong, finishLat, finishLong, route_name, "", "", 0);
 
         newRouteRef.setValue(route);
 
@@ -407,10 +407,10 @@ public class CustomMapFragment extends Fragment
 
         //TODO: add time here
 
-        History history = new History(user_id, route_id, distance, avg_speed,topSpeed * 3600/1000, time);
+        /*History history = new History(user_id, route_id, distance, avg_speed,topSpeed * 3600/1000, time);
 
         Firebase historyRef = new Firebase(Config.HISTORY_URL);
-        historyRef.push().setValue(history);
+        historyRef.push().setValue(history);*/
 
         createUserRouteRelation();
 
