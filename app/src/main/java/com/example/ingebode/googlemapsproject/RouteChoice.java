@@ -112,6 +112,8 @@ public class RouteChoice extends Activity{
                     route_id = selectedRoute.getRoute_id();
                     route_name = selectedRoute.getRoute_name();
                     point_collection_id = selectedRoute.getPoint_collection_id();
+
+                    Log.v("RouteChoice: ", "point collection id " + point_collection_id);
                     passIntent();
                 }
             }

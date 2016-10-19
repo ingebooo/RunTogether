@@ -11,12 +11,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.ingebode.R;
+import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
 import com.firebase.client.Firebase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by ingeborgoftedal on 28/09/16.
  */
-public class Welcome_activity extends Activity {
+public class WelcomeActivity extends Activity {
 
     private String user_id;
     private String route_name;
@@ -54,6 +58,37 @@ public class Welcome_activity extends Activity {
         Intent intent = getIntent();
         username = intent.getStringExtra("USERNAME");
         user_id = intent.getStringExtra("USER_ID");
+
+/*
+
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("point_collection_id", "-KU1bzOZqhnZsZwwBTHM");
+
+        Firebase routeref = new Firebase(Config.ROUTE_URL).child("-KU1bzOJGnwVLDn1Up50");
+        routeref.updateChildren(map);*/
+
+        //createUserRouteRelation("-KTOuUgCYzXwPu_bYCa3", "106412529072612026794", "Hanna Kahrs","-KTOuUfz3c6jQgV4PNdH");
+        //createUserRouteRelation("-KTjyoL9HZ_Q82wZJN0U", "106412529072612026794", "Ida Anderskog", "-KTjyoKwOTRE2hmayDGu");
+
+
+
+
+    }
+
+    private void createUserRouteRelation(String rid, String uid, String uname, String pointid) {
+
+        Firebase reffer = new Firebase(Config.FIREBASE_URL);
+        Firebase newReffer = reffer.child("routeRelations");
+
+        Firebase newRefferRouteID = newReffer.child(rid);
+
+        UserRouteRelation relation = new UserRouteRelation(rid, uid, uname, pointid, "");
+
+        newRefferRouteID.push().setValue(relation);
+
+        Toast.makeText(getApplicationContext(),
+                "User route relation created...", Toast.LENGTH_SHORT)
+                .show();
     }
 
     public void createNewRoute(View v){

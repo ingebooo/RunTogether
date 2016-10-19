@@ -131,6 +131,9 @@ public class Route {
         public int getPoint_number(){
             return point_number;
         }
+        public void setPoint_number(int point_number){
+            this.point_number = point_number;
+        }
     }
 }
 

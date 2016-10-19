@@ -1,14 +1,11 @@
 package com.example.ingebode.googlemapsproject;
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -19,15 +16,15 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.ingebode.R;
-import com.example.ingebode.googlemapsproject.models.Finish;
 import com.example.ingebode.googlemapsproject.models.History;
+import com.example.ingebode.googlemapsproject.models.Point;
 import com.example.ingebode.googlemapsproject.models.Route;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
 import com.firebase.client.DataSnapshot;
@@ -42,34 +39,24 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.*;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.MessageApi;
-import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
@@ -109,7 +96,7 @@ public class NewRouteActivity extends FragmentActivity implements
     double newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong;
 
 
-    float topSpeed;
+    float topSpeed = 0;
     float avg_speed;
     float old_avg;
     float forget;
@@ -122,7 +109,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
     String cords = "";
 
-    private List<Route.Point> newPoints = new ArrayList<>();
+    private List<Point> newPoints = new ArrayList<>();
 
     Typeface myFontMedium;
     Typeface myFontLight;
@@ -134,6 +121,7 @@ public class NewRouteActivity extends FragmentActivity implements
     Firebase newRouteRef;
     Firebase newPointCollection;
     Firebase pointRef2 = new Firebase(Config.POINTS_URL);
+
     Firebase pointsRef = new Firebase(Config.POINTS_URL);
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -141,12 +129,14 @@ public class NewRouteActivity extends FragmentActivity implements
     String user_id, competitor_id, route_id;
     String route_name, username;
     boolean createNewRoute = true;
-    int feedback;
     private String point_collection_id;
+
     double lat1, long1, lat2, long2;
 
     private static GoogleMap mMap;
     Button stopButton;
+
+
 
     TextView warningTextView;
     private TimerTask timerTask;
@@ -171,7 +161,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
         running = false;
 
-        newPoints = new ArrayList<Route.Point>();
+        newPoints = new ArrayList<Point>();
 
         warningTextView = (TextView)findViewById(R.id.warning);
 
@@ -184,7 +174,63 @@ public class NewRouteActivity extends FragmentActivity implements
 
         stopButton = (Button)findViewById(R.id.stop_btn);
 
-        
+
+
+        rectOptions = new PolylineOptions();
+
+
+
+        pointsRef = new Firebase(Config.POINTS_URL).child("-KTydqfGXpVPBCPRN1pI");
+        pointsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+
+                for (DataSnapshot snap : snapshot.getChildren()) {
+
+                    //Point point = snap.getValue(Point.class);
+
+                    Point point = snap.getValue(Point.class);
+
+                    rectOptions.add(new LatLng(point.getLatitude(), point.getLongitude()));
+
+                }
+
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
+
+        Firebase points2 = new Firebase(Config.POINTS_URL).child("-KTyggCV6SwyRFzVgcXz");
+        points2.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+
+                for (DataSnapshot snap : snapshot.getChildren()) {
+
+                    //Point point = snap.getValue(Point.class);
+
+                    Point point = snap.getValue(Point.class);
+
+                    rectOptions.add(new LatLng(point.getLatitude(), point.getLongitude()));
+
+                }
+                if(mGoogleApiClient.isConnected()){
+                    mMap.addPolyline(rectOptions);
+
+                }
+
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
+        });
+
+
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -239,6 +285,7 @@ public class NewRouteActivity extends FragmentActivity implements
                 map.put("time", dateString);
 
 
+
                 AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(NewRouteActivity.this);
                 LayoutInflater inflater = (NewRouteActivity.this).getLayoutInflater();
 
@@ -261,7 +308,7 @@ public class NewRouteActivity extends FragmentActivity implements
                 }
                 //map.put("route_name", route_name);
 
-
+                writeToHistory();
 
 
                 okBtn.setOnClickListener(new View.OnClickListener() {
@@ -269,9 +316,6 @@ public class NewRouteActivity extends FragmentActivity implements
                     public void onClick(View view) {
 
                         route_name = input.getText().toString();
-
-
-                        writeToHistory();
                         passIntent();
 
                     }
@@ -284,8 +328,8 @@ public class NewRouteActivity extends FragmentActivity implements
         });
 
 
-        rectOptions = new PolylineOptions();
 
+/*
 
             rectOptions.add(new LatLng(63.42796855, 10.40603855));
             rectOptions.add(new LatLng(63.42788217, 10.40732601));
@@ -302,7 +346,6 @@ public class NewRouteActivity extends FragmentActivity implements
             rectOptions.add(new LatLng(63.43527474, 10.41827917));
             rectOptions.add(new LatLng(63.43210786, 10.41055441));
             rectOptions.add(new LatLng(63.43160881, 10.41158438));
-            rectOptions.add(new LatLng(63.4296169, 10.4065531));
 
 
 
@@ -314,7 +357,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
 
                         hannaFinishLat =63.4296169;
-                        hannaFinishLong = 10.4065531;
+                        hannaFinishLong = 10.4065531; */
 
 
         startButton.setOnClickListener(new View.OnClickListener() {
@@ -324,6 +367,8 @@ public class NewRouteActivity extends FragmentActivity implements
                 Toast.makeText(getApplicationContext(), "Start recording route", Toast.LENGTH_SHORT).show();
                 newPointCollection = pointsRef.push();
                 point_collection_id = newPointCollection.getKey();
+
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
                     warningTextView.setText("Start saved.Now running...");
                     warningTextView.setTextColor(Color.GREEN);
@@ -347,6 +392,7 @@ public class NewRouteActivity extends FragmentActivity implements
         });
         
         getDataFromIntent();
+
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -385,7 +431,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
         Firebase newRefferRouteID = newReffer.child(route_id);
 
-        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id, "", timesBehind, timesInfront, timesBeside);
+        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id, "");
 
         newRefferRouteID.push().setValue(relation);
 
@@ -545,7 +591,7 @@ public class NewRouteActivity extends FragmentActivity implements
                     public void run() {
                         if (running == true) {
 
-                            Route.Point point = new Route.Point(user_id, route_id, current_lat, current_long, 0, point_number);
+                            Point point = new Point(user_id, route_id, current_lat, current_long, 0, point_number);
                             newPoints.add(point);
 
                             float[] results = new float[1];
@@ -567,20 +613,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
                             Toast.makeText(getApplicationContext(), "Point added to list", Toast.LENGTH_SHORT).show();
 
-
-
-                            /*
-                            if(old_avg == 0){
-                                old_avg = mLastLocation.getSpeed();
-                            } else {
-                                old_avg = avg_speed;
-                            }
-                            avg_speed = (newPoints.size() * old_avg - forget * mLastLocation.getSpeed());
-                            forget = mLastLocation.getSpeed();
-
-
-*/
-
+/*
                             if(newPoints.size() == 350){
                                 Toast.makeText(getApplicationContext(), "Stopped recording route", Toast.LENGTH_SHORT).show();
 
@@ -616,7 +649,7 @@ public class NewRouteActivity extends FragmentActivity implements
                                 //Calculate distance(in km) from latitude & longitude
                                 distanceString = ""+ Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100;
 
-                                avg_speed = (float) (Math.floor((360 * distance) / newPoints.size()) * 35 / 35);
+                                avg_speed = (float) (Math.floor((360 * distance) / newPoints.size()) * 100 / 100);
 
                                 warningTextView.setText("Route saved!");
                                 warningTextView.setTextColor(Color.GREEN);
@@ -652,21 +685,16 @@ public class NewRouteActivity extends FragmentActivity implements
                                 dialogBuilder.setView(dialogView);
 
                                 route_name = input.getText().toString();
+
                                 if (newRouteRef != null) {
                                     newRouteRef.updateChildren(map);
                                 }
-                                //map.put("route_name", route_name);
-
-
-
 
                                 okBtn.setOnClickListener(new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
 
                                         route_name = input.getText().toString();
-
-
                                         writeToHistory();
                                         passIntent();
 
@@ -675,7 +703,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
                                 AlertDialog b = dialogBuilder.create();
                                 b.show();
-                            }
+                            }*/
                         }
                     }
                 });
@@ -704,8 +732,6 @@ public class NewRouteActivity extends FragmentActivity implements
     }
     private void writeToHistory() {
 
-        String date = getDate();
-
         Date endTime = new Date();
         long diff = endTime.getTime() - now.getTime();
         SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
@@ -714,9 +740,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
         //TODO: add time here
 
-        History history = new History(user_id, route_id, distance + "", avg_speed + "",topSpeed+ "", time);
-
-       // * 3600/1000
+        History history = new History(user_id, route_id, distance + "", avg_speed + "",topSpeed * 36/10+ "", time, "N/A", "N/A");
 
         Firebase historyRef = new Firebase(Config.HISTORY_URL);
         historyRef.push().setValue(history);
@@ -726,9 +750,6 @@ public class NewRouteActivity extends FragmentActivity implements
         //placing the whole list  with new points into firebase with new point collection ID
         newPointCollection.setValue(newPoints);
 
-        //Google Analytics
-      /*  Tracker t = ((fitnessApp) getApplication()).getTracker(fitnessApp.TrackerName.APP_TRACKER);
-        t.send(new HitBuilders.EventBuilder().setCategory("Achievement").setAction("Finish Route").setLabel("Finish").build()); */
 
         if(mGoogleApiClient.isConnected()) {
             stopLocationUpdates();
@@ -772,10 +793,10 @@ public class NewRouteActivity extends FragmentActivity implements
         Log.v("you are here", mLastLocation.getLatitude() + "lats og long " + mLastLocation.getLongitude());
 
 
-        MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(hannaStartLat, hannaStartLong)).title("Start");
-        MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(63.4296169, 10.4065531)).title("Finish");
+       // MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(63.4279523, 10.4059805)).title("Start");
 
-        Log.v("markerOptions2)", markerOptions2.toString() + "");
+        //MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(63.42802, 10.4044252)).title("Finish");
+
 
 
         //markerOptions4.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
@@ -783,18 +804,19 @@ public class NewRouteActivity extends FragmentActivity implements
 
        // rectOptions.add(new LatLng(63.4296169, 10.4065531));
 
-        markerOptions1.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-        markerOptions2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+       // markerOptions1.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
 
-        mMap.addMarker(markerOptions1);
-        mMap.addMarker(markerOptions2);
+      //  markerOptions2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+
+     //   mMap.addMarker(markerOptions1);
+       // mMap.addMarker(markerOptions2);
 
         markerOptions3.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
 
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom((new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())), 17));
 
-        Log.v("rectOptions: ", rectOptions.getPoints().size() + "");
-        mMap.addPolyline(rectOptions);
+       // Log.v("rectOptions: ", rectOptions.getPoints().size() + "");
+        //((mMap.addPolyline(rectOptions);
 
         if(mMap == null) {
             Toast.makeText(this.getApplicationContext(),

@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.Environment;
@@ -22,6 +23,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.wearable.Asset;
@@ -30,6 +32,8 @@ import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -42,14 +46,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 
-public class FinishActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener,
-        MessageApi.MessageListener {
+public class FinishActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, MessageApi.MessageListener {
 
-    String MOBILE_DATA_PATH = "/mobile_data";
+    String MESSAGE_RECEIVED_PATH = "/synd_data_path";
     String WEARABLE_DATA_PATH = "/wearable_data";
 
     private GoogleApiClient mGoogleApiClient;
@@ -64,13 +69,11 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
 
 
     TextView textview;
-    TextView waiting_textView;
+    TextView synced_textView;
     Button button;
     ArrayList<DataMap> dataMapArrayList;
 
     private static final String CONNECTED_PATH = "/mobile-connected";
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,39 +99,28 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
                 .build();
 
         textview = (TextView)findViewById(R.id.textView3);
-        waiting_textView = (TextView)findViewById(R.id.waiting_textView);
-        button = (Button)findViewById(R.id.sync_button);
         textview.setTypeface(myFontMedium);
-
-
-        waiting_textView.setTypeface(myFontMedium);
-        button.setTypeface(myFontMedium);
-
-        getDataFromIntent();
-
-        if(!(isConnected)){
-            button.setEnabled(false);
-        } else {
-            button.setEnabled(true);
-
-            Log.v("FinishActivity", "cords: " + cords);
-        }
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        synced_textView = (TextView)findViewById(R.id.sync_textView);
+        synced_textView.setTypeface(myFontMedium);
+
+        getDataFromIntent();
+
+        button = (Button)findViewById(R.id.sync_button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 writePointsToFile(cords);
 
                 Log.v("cords:", cords + "");
 
-                //writePointsToFile("DRITTTSEKKKKDkashdiasdkashdkjsahdkasjhdkasjhdksahdsakdjasidjnskdhd");
                 sendFile();
             }
         });
 
+        button.setTypeface(myFontMedium);
 
     }
     protected void onStart() {
@@ -146,12 +138,6 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
         mGoogleApiClient.disconnect();
         super.onDestroy();
     }
-
-    @Override
-    public void onDataChanged(DataEventBuffer dataEventBuffer) {
-
-    }
-
     public void getDataFromIntent(){
         Intent intent = getIntent();
         cords = intent.getStringExtra("cords");
@@ -171,11 +157,9 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
 
         if (file.exists()) {
             file.delete();
-            Log.v("file deleted", "onPostExecute" + "");
         }
         try {
             file.createNewFile();
-            Log.v("file created", "onPostExecute" + "");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -198,8 +182,6 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
     }
     public void sendFile() {
         // Read the text file into a byte array
-        readFile();
-
         Log.v("sendFile", "file sent");
 
         FileInputStream fileInputStream = null;
@@ -217,57 +199,25 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
         dataMap.getDataMap().putAsset("com.example.company.key.TXT", asset);
         PutDataRequest request = dataMap.asPutDataRequest();
 
+
+
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                 .putDataItem(mGoogleApiClient, request);
 
+        synced_textView.setText("Data synced with mobile");
+
         request.setUrgent();
     }
-
-    public void readFile(){
-
-        File sdcard = Environment.getExternalStorageDirectory();
-        File dir = new File(sdcard.getAbsolutePath() + "/MyAppFolder/");
-        if (!dir.exists()) { dir.mkdirs(); } // Create folder if needed
-
-        // Read data from the Asset and write it to a file on external storage
-        final File file = new File(dir, "testing.txt");
-
-        try (FileInputStream fis = new FileInputStream(file)) {
-
-            String s  = "";
-            int content;
-            while ((content = fis.read()) != -1) {
-                // convert to char and display it
-                System.out.print("readFile finish " + (char) content);
-                s += (char) content;
-            }
-            List<String> historyList = Arrays.asList(s.split(","));
-            Log.v("historyList.get(0) ", historyList.get(0));
-            Log.v("historyList.get(1) ", historyList.get(1));
-            Log.v("historyList.get(2) ", historyList.get(2));
-            Log.v("historyList.get(3) ", historyList.get(3));
-
-
-
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         // Check to see if the message is to start an activity
         if (messageEvent.getPath().equals(CONNECTED_PATH)) {
 
-            Log.v("Mobile is connected", "ready to send data");
-
             isConnected = true;
             button.setEnabled(true);
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -276,7 +226,6 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
     @Override
     protected void onPause() {
         if ((mGoogleApiClient != null) && mGoogleApiClient.isConnected()) {
-            Wearable.DataApi.removeListener(mGoogleApiClient, this);
             Wearable.MessageApi.removeListener(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
@@ -285,7 +234,6 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
     }
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
     }
     @Override
@@ -296,4 +244,5 @@ public class FinishActivity extends Activity implements GoogleApiClient.Connecti
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
 }

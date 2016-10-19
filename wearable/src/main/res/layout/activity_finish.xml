@@ -20,25 +20,26 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="51dp" />
 
-    <Button
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:text="Sync with mobile"
-        android:textAllCaps="false"
-        android:background="@drawable/shape"
-        android:backgroundTint="@color/stem"
-        android:id="@+id/sync_button"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Waiting for mobile to connect..."
-        android:textColor="@color/poppy"
         android:textAllCaps="false"
-        android:id="@+id/waiting_textView"
-        android:layout_above="@+id/sync_button"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="30dp" />
+        android:textColor="@color/petal"
+        android:text=""
+        android:id="@+id/sync_textView"
+        android:layout_below="@+id/textView3"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:background="@drawable/shape"
+        android:backgroundTint="@color/stem"
+        android:text="Sync with mobile"
+        android:id="@+id/sync_button"
+        android:layout_below="@+id/sync_textView"
+        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>

@@ -66,6 +66,7 @@ public class CompetitorChoice extends Activity {
         createNewRoute=intent.getExtras().getBoolean("CREATENEWROUTE");
         route_name=intent.getStringExtra("ROUTE_NAME");
         point_collection_id = intent.getStringExtra("POINT_COLLECTION_ID");
+        Log.v("CompetitorChoice: ", "point collection id " + point_collection_id);
 
         Firebase ref = new Firebase(Config.FIREBASE_URL).child("routeRelations").child(route_id);
 

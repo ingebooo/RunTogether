@@ -19,6 +19,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.wearable.view.DismissOverlayView;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -50,6 +51,10 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -65,14 +70,16 @@ import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
 public class MapsActivity extends Activity implements OnMapReadyCallback,
-        GoogleMap.OnMapLongClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleMap.OnMapLongClickListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener, MessageApi.MessageListener {
 
     /**
      * Overlay that shows a short help text when first launched. It also provides an option to
@@ -84,6 +91,8 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
     PolylineOptions rectOptions;
 
     String cords = "";
+
+    private static final String CONNECTED_PATH = "/mobile-connected";
 
     double current_lat, current_long;
     double newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong;
@@ -135,6 +144,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
     String WEARABLE_DATA_PATH = "/wearable_data";
 
 
+
     ArrayList<Point> newPointList;
 
     public void onCreate(Bundle savedState) {
@@ -148,7 +158,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         createNewRoute = false;
 
         running = true;
-        csvFile = new CSVFile(getApplicationContext());
 
         if (!hasGps()) {
             Log.d("tag", "This hardware doesn't have GPS.");
@@ -190,15 +199,18 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
         // Obtain the DismissOverlayView and display the introductory help text.
         mDismissOverlay = (DismissOverlayView) findViewById(R.id.dismiss_overlay);
-        mDismissOverlay.setIntroText(R.string.intro_text);
+        mDismissOverlay.setIntroText("Finished running?");
         mDismissOverlay.showIntroIfNecessary();
+
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
-                .addApi(Wearable.API)  // used for data layer API
+                .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+
+
         getDataFromIntent();
 
               /* Request user permissions in runtime */
@@ -210,6 +222,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                 100);
 
         // Obtain the MapFragment and set the async listener to be notified when the map is ready.
+
         MapFragment mapFragment =
                 (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -265,6 +278,8 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+
+        Wearable.MessageApi.addListener(mGoogleApiClient, this);
 
         locationRequest = new LocationRequest();
         locationRequest = LocationRequest.create()
@@ -342,28 +357,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
             mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
         }
 
-        checkProximity();
-    }
-
-    public void checkProximity() {
-
-        if ((Math.abs(current_lat - lat2) < 0.0001) && (Math.abs(current_long - long2) < 0.0001) && (running == true) && (point_number >= listPoints.size())) {
-            Toast.makeText(this.getApplicationContext(),
-                    "Route completed", Toast.LENGTH_SHORT)
-                    .show();
-
-            if (timer != null) {
-                timer.cancel();
-                timer = null;
-
-                //Her må poengene sendes tilbake til mobil / finish activity
-                running = false;
-                stopLocationUpdates();
-                mGoogleApiClient.disconnect();
-
-                passIntent();
-            }
-        }
     }
 
     @Override
@@ -372,7 +365,12 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         stopLocationUpdates();
         mGoogleApiClient.disconnect();
         mDismissOverlay.show();
-        stopLocationUpdates();
+
+        passIntent();
+
+        if (timer != null){
+            timer.cancel();
+        }
     }
 
     private boolean hasGps() {
@@ -393,7 +391,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
     public void addMarkers() {
         markerOptions3 = new MarkerOptions().position(new LatLng(current_lat, current_long)).title("You are here");
-        BitmapDescriptor icon2 = BitmapDescriptorFactory.fromResource(R.drawable.ingeborg);
+        BitmapDescriptor icon2 = BitmapDescriptorFactory.fromResource(R.drawable.ida);
 
         //markerOptions3.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
         markerOptions3.icon(icon2);
@@ -402,9 +400,9 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
             MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(lat1, long1)).title("Start");
             MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(lat2, long2)).title("Finish");
 
-            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.magda);
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ingeborg);
 
-            markerOptions4 = new MarkerOptions().position(new LatLng(listPoints.get(0).getLatitude(), listPoints.get(0).getLongitude())).title(competitor_username);
+            markerOptions4 = new MarkerOptions().position(new LatLng(listPoints.get(0).getLatitude(), listPoints.get(0).getLongitude())).title("Ingeborg");
             //markerOptions4.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 
 
@@ -509,14 +507,16 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         //initialize the TimerTask's job
         initializeTimerTask();
 
-        //schedule the timer, the TimerTask will run every 5 sec
-        timer.schedule(timerTask, 3000, 3500); //
+        //schedule the timer, the TimerTask will run every 3,5 secon sec
+        timer.schedule(timerTask, 5000, 3500); //
 
     }
 
     protected void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                mGoogleApiClient, this);
+        if(mGoogleApiClient.isConnected()) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                    mGoogleApiClient, this);
+        }
     }
 
     public void initializeTimerTask() {
@@ -534,11 +534,29 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                 handler.post(new Runnable() {
                     public void run() {
 
+                        int timesInfront = 0;
+                        int timesBehind = 0;
+
                         if (running == true) {
 
                             Point point = new Point("", "", current_lat, current_long, point_number);
                             newPointList.add(point);
                             //cords += (current_lat + "," + current_long+ "\n");
+
+                            float[] results = new float[1];
+
+                            Log.v("point number ", "" + point_number);
+
+
+                            if(point_number > 0) {
+                                Location.distanceBetween(newPointList.get(point_number - 1).getLatitude(), newPointList.get(point_number - 1).getLongitude(), point.getLatitude(), point.getLongitude(), results);
+                                System.out.print("point_number - 1" + (point_number - 1));
+                            }
+
+
+
+
+                            distance += results[0];
 
                             point_number++;
                             Log.v("point_number: ", point_number + "");
@@ -554,39 +572,31 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
                                 topSpeed = mLastLocation.getSpeed();
                             }
 
-                            if(point_number == 2){
-                                distance = Math.floor(calcDistance(lat1, long1, lat2, long2) * 100) / 100;
-
-                                Date endTime = new Date();
-                                long diff = endTime.getTime() - now.getTime();
-                                SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
-                                sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
-                                String time = sdt.format(new Date(diff));
-
-                                long nTime = now.getTime();
-
-                                cords = nTime + "," + distance + "," + time + "," + avg_speed *3600/1000 + "," + topSpeed *3600/1000;
-
-
-                                passIntent();
-                                System.out.println("passIntent()");
-
-                                /*
-                                writePointsToFile(cords);
-                                sendFile();
-                                System.out.println("file sent");*/
-                            }
 
 
                             if (listPoints.size() > point_number) {
-                                Log.v("listpoint.size: ", listPoints.size() + "");
-
 
                                 double friendLat = listPoints.get(point_number).getLatitude();
                                 double friendLong = listPoints.get(point_number).getLongitude();
                                 marker4.setPosition(new LatLng(friendLat, friendLong));
                                 marker4.showInfoWindow();
+
+                                if(!(isAhead(friendLat, friendLong))){
+                                    timesBehind++;
+                                } else {
+                                    timesInfront++;
+                                }
                             }
+
+                            Date endTime = new Date();
+                            long diff = endTime.getTime() - now.getTime();
+                            SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
+                            sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
+                            String time = sdt.format(new Date(diff));
+                            long nTime = now.getTime();
+
+                            cords = nTime + "," + distance + "," + time + "," + avg_speed *3600/1000 + "," + topSpeed *3600/1000 + "," + timesBehind + "," + timesInfront;
+
                         }
                     }
 
@@ -600,7 +610,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         timer.cancel();
         Intent intent = new Intent(this, FinishActivity.class);
         intent.putExtra("cords", cords);
-
 
         Log.v("MapsActivity", "cords: " + cords);
 
@@ -666,4 +675,17 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
             e.printStackTrace();
         }
     }*/
+    @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+        // Check to see if the message is to start an activity
+        if (messageEvent.getPath().equals(CONNECTED_PATH)) {
+
+            Log.v("Mobile is connected", "ready to send data");
+            Log.v("Mobile is connected", messageEvent.getData().toString());
+            passIntent();
+            System.out.println("passIntent()");
+
+        }
+
+    }
 }

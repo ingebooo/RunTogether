@@ -1,7 +1,6 @@
 package com.example.ingebode.googlemapsproject;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -12,8 +11,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.SystemClock;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -24,7 +21,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.ingebode.R;
-import com.example.ingebode.googlemapsproject.models.Finish;
 import com.example.ingebode.googlemapsproject.models.History;
 import com.example.ingebode.googlemapsproject.models.Route;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
@@ -46,46 +42,37 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataApi.DataListener;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -93,19 +80,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class StartWearActivity extends FragmentActivity implements
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback, LocationListener, DataListener {
+        GoogleApiClient.OnConnectionFailedListener, OnMapReadyCallback, LocationListener, DataApi.DataListener, MessageApi.MessageListener {
 
     GoogleApiClient googleClient;
     ArrayList<DataMap> pointData = new ArrayList<DataMap>();
     Button send_btn;
-    Button start_wear;
-    Button fillArray;
 
-    CSVFile csvFile;
     File file;
 
-    int timesBehind = 0;
-    int timesInfront = 0;
+    String timesBehind = "";
+    String timesInfront = "";
     int counter = 0;
     Handler handler = new Handler();
     Timer timer;
@@ -121,6 +105,8 @@ public class StartWearActivity extends FragmentActivity implements
     float avg_speed = 0;
     float old_avg = 0;
     float forget = 0;
+
+    boolean fileCreated = false;
 
     boolean isFinish = false;
 
@@ -145,6 +131,7 @@ public class StartWearActivity extends FragmentActivity implements
     private static final String START_ACTIVITY_PATH = "/start-activity";
     String WEARABLE_DATA_PATH = "/wearable_data";
     String MOBILE_DATA_PATH = "/mobile_data";
+    String MESSAGE_RECEIVED_PATH = "/synd_data_path";
 
     private static final String CONNECTED_PATH = "/mobile-connected";
 
@@ -267,39 +254,54 @@ public class StartWearActivity extends FragmentActivity implements
         getDataFromIntent();
         final int point_number = 0;
 
-
         pointsRef = new Firebase(Config.POINTS_URL).child(point_collection_id);
+
+        Log.v("StartWearActivity: ", "point collection id " + point_collection_id);
+
         pointsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
+                int i = 0;
                 // do some stuff once
                 for (DataSnapshot snap : snapshot.getChildren()) {
                     Route.Point point = snap.getValue(Route.Point.class);
                     DataMap map = new DataMap();
 
-                    map.putString("user_id", point.getUser_id());
-                    map.putString("route_id", point.getRoute_id());
-                    map.putDouble("latitude", point.getLatitude());
-                    map.putDouble("longitude", point.getLongitude());
-                    map.putInt("point_number", point.getPoint_number());
-                    map.putInt("counter", (int) snapshot.getChildrenCount());
-                    map.putString("competitor_name", competitor_username);
-                    map.putInt("feedback", feedback);
-                    map.putString("username", username);
-                    //Log.v("time", new Date().getTime() + "");
-                    //ADD RANDOM ELLER TIMESTAMP!
+                    if(snapshot.getChildrenCount() < 350) {
 
-                    //public void writePoints(String filename,String user_id,String route_id,String latitude,String longitude, String point_number){
+                        map.putString("user_id", point.getUser_id());
+                        map.putString("route_id", point.getRoute_id());
+                        map.putDouble("latitude", point.getLatitude());
+                        map.putDouble("longitude", point.getLongitude());
+                        map.putInt("point_number", i);
+                        map.putInt("counter", (int) snapshot.getChildrenCount());
+                        map.putString("competitor_name", competitor_username);
+                        map.putInt("feedback", feedback);
+                        map.putString("username", username);
+                        i++;
 
-
-
-                    pointData.add(map);
-                    listPoints.add(point);
-
+                        pointData.add(map);
+                        listPoints.add(point);
+                    } else {
+                        if(fileCreated == false){
+                            try {
+                                createFile();
+                                writePointsToFile(snapshot.getChildrenCount() + ",");
+                                writePointsToFile(user_id + ",");
+                                writePointsToFile(route_id + ",");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        writePointsToFile(point.getLatitude() + "," + point.getLongitude() + "!");
+                    }
 
                 }
-
-                new SendToDataLayerThread(WEARABLE_DATA_PATH, pointData).start();
+                if(snapshot.getChildrenCount() < 350) {
+                    new SendToDataLayerThread(WEARABLE_DATA_PATH, pointData).start();
+                } else {
+                    sendFile();
+                }
             }
 
             @Override
@@ -420,36 +422,6 @@ public class StartWearActivity extends FragmentActivity implements
             startActivity(intent2);
         }
     }
-
-    /*
-    private void writeToHistory() {
-        Date endTime = new Date();
-        long diff = endTime.getTime() - now.getTime();
-        SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
-        sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
-        String time = sdt.format(new Date(diff));
-
-        double distance;
-        //Calculate distance(in km) from latitude & longitude
-
-        distance = Math.floor(calcDistance(lat1, long1, lat2, long2) * 100) / 100;
-
-        //Calculate Average Speed (in km/hr) calculated with point period of 10 secs
-        double avg_speed = Math.floor((360 * distance) / newPoints.size()) * 35 / 35;
-
-
-        History history = new History(user_id, route_id, distance, avg_speed, topSpeed *3600/1000, time);
-
-        Firebase historyRef = new Firebase(Config.HISTORY_URL);
-        historyRef.push().setValue(history);
-
-        createUserRouteRelation();
-
-        if(googleClient.isConnected()) {
-            googleClient.disconnect();
-        }
-    }*/
-
     public void readFile(File file){
         System.out.println("reading file");
         String distanceString = "";
@@ -481,9 +453,11 @@ public class StartWearActivity extends FragmentActivity implements
             time = historyList.get(2);
             avg_speedString =  historyList.get(3);
             top_speedString =  historyList.get(4);
+            timesBehind = historyList.get(5);
+            timesInfront = historyList.get(6);
 
 
-            History history = new History(user_id, route_id, distanceString, avg_speedString, top_speedString, time);
+            History history = new History(user_id, route_id, distanceString, avg_speedString, top_speedString, time, timesBehind, timesInfront);
 
             Firebase historyRef = new Firebase(Config.HISTORY_URL);
             historyRef.push().setValue(history);
@@ -501,37 +475,6 @@ public class StartWearActivity extends FragmentActivity implements
         if(googleClient.isConnected()) {
             googleClient.disconnect();
         }
-
-
-/*
-        Date endTime = new Date();
-        long diff = endTime.getTime() - now.getTime();
-        SimpleDateFormat sdt = new SimpleDateFormat("HH:mm:ss");
-        sdt.setTimeZone(TimeZone.getTimeZone("GMT"));
-        String time = sdt.format(new Date(diff));*/
-
-        double distance;
-        //Calculate distance(in km) from latitude & longitude
-
-        distance = Math.floor(calcDistance(lat1, long1, lat2, long2) * 100) / 100;
-
-        //Calculate Average Speed (in km/hr) calculated with point period of 10 secs
-        //double avg_speed = Math.floor((360 * distance) / newPoints.size()) * 100 / 100;
-
-        //String time = "";
-
-        //History history = new History(user_id, route_id, distance, avg_speed, topSpeed *3600/1000, time);
-
-        //Firebase historyRef = new Firebase(Config.HISTORY_URL);
-        //historyRef.push().setValue(history);
-
-        //createUserRouteRelation();
-
-        if(googleClient.isConnected()) {
-            googleClient.disconnect();
-        }
-
-
     }
 
     public void onDataChanged(DataEventBuffer dataEvents) {
@@ -569,9 +512,10 @@ public class StartWearActivity extends FragmentActivity implements
 
     }
 
-    private void sendConnectedMessage(String node) {
+
+    private void sendConnectedMessage(String node, String messageData) {
         Wearable.MessageApi.sendMessage(
-                googleClient, node, CONNECTED_PATH, new byte[0]).setResultCallback(
+                googleClient, node, CONNECTED_PATH, messageData.getBytes()).setResultCallback(
                 new ResultCallback<MessageApi.SendMessageResult>() {
                     @Override
                     public void onResult(MessageApi.SendMessageResult sendMessageResult) {
@@ -583,6 +527,24 @@ public class StartWearActivity extends FragmentActivity implements
                     }
                 }
         );
+    }
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        googleClient.connect();
+    }
+    @Override
+    protected void onPause() {
+        if ((googleClient!= null) && googleClient.isConnected()) {
+            Wearable.DataApi.removeListener(googleClient, this);
+            Wearable.MessageApi.removeListener(googleClient, this);
+            googleClient.disconnect();
+        }
+
+        super.onPause();
     }
 
     // Send a data object when the data layer connection is successful.    @Override
@@ -610,7 +572,7 @@ public class StartWearActivity extends FragmentActivity implements
 
         Firebase newRefferRouteID = newReffer.child(route_id);
 
-        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, new_point_collection_id, "", timesBehind, timesInfront, 0);
+        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, new_point_collection_id, "");
 
         newRefferRouteID.push().setValue(relation);
 
@@ -652,8 +614,11 @@ public class StartWearActivity extends FragmentActivity implements
         @Override
         protected Void doInBackground(Void... args) {
             Collection<String> nodes = getNodes();
+
+            String s = "halla balla";
+
             for (String node : nodes) {
-                sendConnectedMessage(node);
+                sendConnectedMessage(node, s);
             }
             return null;
         }
@@ -676,8 +641,17 @@ public class StartWearActivity extends FragmentActivity implements
     }
 
     @Override
+    public void onMessageReceived(MessageEvent event) {
+        if (event.getPath().equals(MESSAGE_RECEIVED_PATH)) {
+            Log.v("onMessageReceived", event.getData().toString() + "");
+        }
+
+    }
+
+    @Override
     public void onConnected(@Nullable Bundle bundle) {
         Wearable.DataApi.addListener(googleClient, this);
+        Wearable.MessageApi.addListener(googleClient, this);
 
         locationRequest = new LocationRequest();
         locationRequest = LocationRequest.create()
@@ -774,21 +748,6 @@ public class StartWearActivity extends FragmentActivity implements
                             Toast.makeText(getApplicationContext(), "Point added to list", Toast.LENGTH_SHORT).show();
                             Route.Point point = new Route.Point(user_id, route_id, current_lat, current_long, 0, point_number++);
                             newPoints.add(point);
-
-
-                            old_avg = avg_speed;
-                            avg_speed = (newPoints.size() * old_avg - forget * mLastLocation.getSpeed());
-                            forget = mLastLocation.getSpeed();
-
-                            if (listPoints.size() > point_number) {
-                                double friendLat = listPoints.get(point_number).getLatitude();
-                                double friendLong = listPoints.get(point_number).getLongitude();
-                                if (isAhead(friendLat, friendLong)) {
-                                    timesInfront++;
-                                } else {
-                                    timesBehind++;
-                                }
-                            }
                         }
                     }
                 });
@@ -896,5 +855,68 @@ public class StartWearActivity extends FragmentActivity implements
                     "Sorry! unable to create maps", Toast.LENGTH_SHORT)
                     .show();
         }
+    }
+    public void createFile() throws IOException {
+        Log.v("creaeFile", "file created");
+        Log.v("fileCreated = ", fileCreated + "");
+
+        fileCreated = true;
+        File sdcard = Environment.getExternalStorageDirectory();
+        File dir = new File(sdcard.getAbsolutePath() + "/MyAppFolder/");
+
+        if (!dir.exists()) {
+            dir.mkdirs();
+        } // Create folder if needed
+
+        file = new File(dir, "longRoute.txt");
+
+        if (file.exists()) {
+            file.delete();
+        }
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writePointsToFile(String data) {
+
+        try {
+            //createFile();
+            Date now = new Date();
+            long nTime = now.getTime();
+            FileOutputStream fOut = new FileOutputStream(file);
+            PrintStream ps = new PrintStream(fOut);
+            ps.println(data);
+            ps.close();
+        } catch (Exception e) {
+            System.out.println("File not found");
+            e.printStackTrace();
+        }
+    }
+    public void sendFile() {
+        // Read the text file into a byte array
+        Log.v("sendFile", "file sent");
+
+        FileInputStream fileInputStream = null;
+        byte[] bFile = new byte[(int) file.length()];
+        try {
+            fileInputStream = new FileInputStream(file);
+            fileInputStream.read(bFile);
+            fileInputStream.close();
+        } catch (Exception e) {
+        }
+
+        // Create an Asset from the byte array, and send it via the DataApi
+        Asset asset = Asset.createFromBytes(bFile);
+        PutDataMapRequest dataMap = PutDataMapRequest.create("/txt");
+        dataMap.getDataMap().putAsset("com.example.company.key.TXT", asset);
+        PutDataRequest request = dataMap.asPutDataRequest();
+
+        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
+                .putDataItem(googleClient, request);
+
+        request.setUrgent();
     }
 }

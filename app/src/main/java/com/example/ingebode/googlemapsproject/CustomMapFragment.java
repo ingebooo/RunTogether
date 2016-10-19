@@ -2,18 +2,14 @@ package com.example.ingebode.googlemapsproject;
 
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Color;
 import android.location.Location;
-import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Vibrator;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -26,8 +22,6 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.ingebode.googlemapsproject.models.Finish;
-import com.example.ingebode.googlemapsproject.models.History;
 import com.example.ingebode.googlemapsproject.models.Route;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
 import com.firebase.client.DataSnapshot;
@@ -66,7 +60,6 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -447,7 +440,7 @@ public class CustomMapFragment extends Fragment
 
         Firebase newRefferRouteID = newReffer.child(route_id);
 
-        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id, dateString, 0, 0,0);
+        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id, dateString);
 
         newRefferRouteID.push().setValue(relation);
     }

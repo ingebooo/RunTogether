@@ -84,7 +84,7 @@ public class SignInActivity extends AppCompatActivity implements
             Toast.makeText(this, "Welcome " + user.getEmail(), Toast.LENGTH_SHORT).show();
 
             // Go back to the main activity
-            startActivity(new Intent(this, Welcome_activity.class));
+            startActivity(new Intent(this, WelcomeActivity.class));
         }
     }
 
@@ -145,7 +145,7 @@ public class SignInActivity extends AppCompatActivity implements
                             //startActivity(new Intent(SignInActivity.this, RouteChoice.class));
 
 
-                            Intent intent = new Intent(SignInActivity.this, Welcome_activity.class);
+                            Intent intent = new Intent(SignInActivity.this, WelcomeActivity.class);
 
                             String name = acct.getDisplayName().toString();
                             String user_id = acct.getId();
