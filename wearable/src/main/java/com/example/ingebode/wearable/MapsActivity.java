@@ -121,8 +121,6 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
     int point_number = 0;
 
-    CSVFile csvFile;
-
     File file;
 
     /**
@@ -391,7 +389,7 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
 
     public void addMarkers() {
         markerOptions3 = new MarkerOptions().position(new LatLng(current_lat, current_long)).title("You are here");
-        BitmapDescriptor icon2 = BitmapDescriptorFactory.fromResource(R.drawable.ida);
+        BitmapDescriptor icon2 = BitmapDescriptorFactory.fromResource(R.drawable.ingeborg);
 
         //markerOptions3.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
         markerOptions3.icon(icon2);
@@ -400,9 +398,9 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
             MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(lat1, long1)).title("Start");
             MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(lat2, long2)).title("Finish");
 
-            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ingeborg);
+            BitmapDescriptor icon = BitmapDescriptorFactory.fromResource(R.drawable.ragna2);
 
-            markerOptions4 = new MarkerOptions().position(new LatLng(listPoints.get(0).getLatitude(), listPoints.get(0).getLongitude())).title("Ingeborg");
+            markerOptions4 = new MarkerOptions().position(new LatLng(listPoints.get(0).getLatitude(), listPoints.get(0).getLongitude())).title("Ida");
             //markerOptions4.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
 
 
@@ -507,8 +505,8 @@ public class MapsActivity extends Activity implements OnMapReadyCallback,
         //initialize the TimerTask's job
         initializeTimerTask();
 
-        //schedule the timer, the TimerTask will run every 3,5 secon sec
-        timer.schedule(timerTask, 5000, 3500); //
+        //schedule the timer, the TimerTask will run every 5 secon sec
+        timer.schedule(timerTask, 5000, 5000); //
 
     }
 

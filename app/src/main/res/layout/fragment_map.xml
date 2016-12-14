@@ -17,8 +17,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:theme="@style/AppTheme"
-    tools:context="com.example.ingebode.googlemapsproject.MapFragment" >
+    android:theme="@style/AppTheme">
     <TextView
         android:id="@+id/warning"
         android:layout_width="wrap_content"

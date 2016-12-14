@@ -7,6 +7,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,7 +41,7 @@ public class SignInActivity extends AppCompatActivity implements
 
     Firebase firebaseRef = new Firebase(Config.FIREBASE_URL);
 
-    private SignInButton mSignInButton;
+    private Button mSignInButton;
 
     private GoogleApiClient mGoogleApiClient;
     Typeface myFontBold;
@@ -47,6 +49,10 @@ public class SignInActivity extends AppCompatActivity implements
 
     // Firebase instance variables
     private FirebaseAuth mFirebaseAuth;
+    private Typeface myFontLight;
+
+    TextView then;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,15 +60,20 @@ public class SignInActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_sign_in);
 
         myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
+        myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
 
         welcome = (TextView)findViewById(R.id.welcome);
         welcome.setTypeface(myFontBold);
 
+        then = (TextView)findViewById(R.id.then);
+        then.setTypeface(myFontBold);
+
         // Assign fields
-        mSignInButton = (SignInButton) findViewById(R.id.sign_in_button);
+        mSignInButton = (Button) findViewById(R.id.sign_in_button);
 
         // Set click listeners
         mSignInButton.setOnClickListener(this);
+        mSignInButton.setTypeface(myFontLight);
 
         // Configure Google Sign In
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -128,6 +139,7 @@ public class SignInActivity extends AppCompatActivity implements
     private void firebaseAuthWithGoogle(final GoogleSignInAccount acct) {
         Log.d(TAG, "firebaseAuthWithGooogle:" + acct.getId());
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+
         mFirebaseAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -142,7 +154,7 @@ public class SignInActivity extends AppCompatActivity implements
                             Toast.makeText(SignInActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
                         } else {
-                            //startActivity(new Intent(SignInActivity.this, RouteChoice.class));
+                            //startActivity(new Intent(SignInActivity.this, RouteChoiceActivity.class));
 
 
                             Intent intent = new Intent(SignInActivity.this, WelcomeActivity.class);

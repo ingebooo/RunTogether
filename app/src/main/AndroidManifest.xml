@@ -28,7 +28,7 @@
     <application
         android:name=".googlemapsproject.GoogleMapsProjectApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/appicon"
         android:label="RunTogether"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
@@ -42,32 +42,12 @@
              You can define the keys for the debug and release targets in src/debug/ and src/release/. 
         -->
 
-        <service android:name=".googlemapsproject.ListenerService">
-            <intent-filter>
-
-                <!-- listeners receive events that match the action and data filters -->
-                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
-
-                <data
-                    android:host="*"
-                    android:pathPrefix="/mobile_data"
-                    android:scheme="wear" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
-
-                <data
-                    android:host="*"
-                    android:pathPrefix="/start-activity"
-                    android:scheme="wear" />
-            </intent-filter>
-
-        </service>
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
         <activity
-            android:name=".googlemapsproject.SignInActivity">
+            android:name=".googlemapsproject.SignInActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -77,7 +57,7 @@
             android:name=".googlemapsproject.StartWearActivity"
             android:label="@string/title_activity_maps" />
         <activity
-            android:name=".googlemapsproject.RouteChoice"
+            android:name=".googlemapsproject.RouteChoiceActivity"
             android:label="@string/title_activity_maps"/>
         <activity
             android:name=".googlemapsproject.NewRouteActivity"
@@ -86,10 +66,10 @@
             android:name=".googlemapsproject.WelcomeActivity"
             android:label="@string/title_activity_maps"/>
         <activity
-            android:name=".googlemapsproject.Finish"
+            android:name=".googlemapsproject.FinishActivity"
             android:label="@string/title_activity_maps"/>
         <activity
-            android:name=".googlemapsproject.CompetitorChoice"
+            android:name=".googlemapsproject.CompetitorChoiceActivity"
             android:label="@string/title_activity_maps"/>
     </application>
 

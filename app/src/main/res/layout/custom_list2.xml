@@ -37,14 +37,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/route_name"
-            android:text="dasd"
-            android:layout_width="wrap_content"
-            android:textSize="25dp"
-            android:textColor="@color/petal"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
+            <TextView
+                android:id="@+id/route_name"
+                android:text="dasd"
+                android:layout_width="wrap_content"
+                android:textSize="25dp"
+                android:textColor="@color/spring"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal" />
 
         </LinearLayout>
 
@@ -59,10 +59,10 @@
                 android:layout_width="wrap_content"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp"
-                android:textSize="20dp"
+                android:textSize="25dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:textColor="@color/poppy"/>
+                android:textColor="@color/spring"/>
 
             <TextView
                 android:id="@+id/created_by"
@@ -70,10 +70,10 @@
                 android:layout_width="wrap_content"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp"
-                android:textSize="20dp"
+                android:textSize="25dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:textColor="@color/poppy"/>
+                android:textColor="@color/spring"/>
 
         </LinearLayout>
 

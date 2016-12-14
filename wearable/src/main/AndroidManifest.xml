@@ -18,12 +18,13 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <uses-library android:name="com.google.android.wearable"
+    <uses-library
+        android:name="com.google.android.wearable"
         android:required="false" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/appicon"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
@@ -65,11 +66,6 @@
             android:name=".wearable.MainActivity"
             android:label="@string/app_name">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
                 <action android:name="com.example.ingebode.wearable.EXAMPLE" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -86,7 +82,15 @@
             android:theme="@android:style/Theme.DeviceDefault.Light" />
         <activity
             android:name=".wearable.FinishActivity"
-            android:label="@string/title_activity_finish"></activity>
+            android:label="@string/title_activity_finish" />
+        <activity
+            android:name=".wearable.StartActivity"
+            android:label="@string/title_activity_start">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

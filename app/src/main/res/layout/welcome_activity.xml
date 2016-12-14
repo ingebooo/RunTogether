@@ -41,7 +41,7 @@
             android:backgroundTint="@color/stem"
             android:textColor="@android:color/white"
             android:layout_height="wrap_content"
-            android:text="Choose route"
+            android:text="Run with friend"
             android:onClick="chooseRoute"
             android:id="@+id/choose_route_btn"
             android:textAllCaps="false"

@@ -83,14 +83,6 @@ public class Route {
         private int repetition;
         private int point_number;
 
-        /*public Point(int point_number,String user_id, String route_id, double latitude, double longitude, int repetition){
-            this.point_number=point_number;
-            this.user_id=user_id;
-            this.route_id=route_id;
-            this.latitude=latitude;
-            this.longitude=longitude;
-            this.repetition=repetition;
-        }*/
 
         public Point(double latitude, double longitude){
             this.latitude = latitude;

@@ -24,13 +24,9 @@ import android.widget.Toast;
 
 import com.example.ingebode.R;
 import com.example.ingebode.googlemapsproject.models.History;
-import com.example.ingebode.googlemapsproject.models.Point;
 import com.example.ingebode.googlemapsproject.models.Route;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
-import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
@@ -109,7 +105,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
     String cords = "";
 
-    private List<Point> newPoints = new ArrayList<>();
+    private List<Route.Point> newPoints = new ArrayList<>();
 
     Typeface myFontMedium;
     Typeface myFontLight;
@@ -144,6 +140,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
     TextView speed;
     private File file;
+    TextView newRoute;
 
 
     @Override
@@ -160,38 +157,44 @@ public class NewRouteActivity extends FragmentActivity implements
                 .build();
 
         running = false;
+        newRoute = (TextView)findViewById(R.id.new_route_text);
 
-        newPoints = new ArrayList<Point>();
-
-        warningTextView = (TextView)findViewById(R.id.warning);
+        newPoints = new ArrayList<Route.Point>();
 
         myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
         myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
         myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
+        newRoute.setTypeface(myFontBold);
+
 
         startButton = (Button)findViewById(R.id.start_btn);
         startButton.setTypeface(myFontLight);
 
         stopButton = (Button)findViewById(R.id.stop_btn);
+        stopButton.setTypeface(myFontLight);
 
 
 
         rectOptions = new PolylineOptions();
 
+        /*
 
 
-        pointsRef = new Firebase(Config.POINTS_URL).child("-KTydqfGXpVPBCPRN1pI");
+
+        pointsRef = new Firebase(Config.POINTS_URL).child("-KTOuUfz3c6jQgV4PNdH");
         pointsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
 
                 for (DataSnapshot snap : snapshot.getChildren()) {
 
-                    //Point point = snap.getValue(Point.class);
-
                     Point point = snap.getValue(Point.class);
 
                     rectOptions.add(new LatLng(point.getLatitude(), point.getLongitude()));
+
+                }
+                if(mGoogleApiClient.isConnected()){
+                    mMap.addPolyline(rectOptions);
 
                 }
 
@@ -202,6 +205,8 @@ public class NewRouteActivity extends FragmentActivity implements
 
             }
         });
+
+
 
         Firebase points2 = new Firebase(Config.POINTS_URL).child("-KTyggCV6SwyRFzVgcXz");
         points2.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -228,7 +233,7 @@ public class NewRouteActivity extends FragmentActivity implements
             public void onCancelled(FirebaseError firebaseError) {
 
             }
-        });
+        });*/
 
 
         stopButton.setOnClickListener(new View.OnClickListener() {
@@ -267,8 +272,6 @@ public class NewRouteActivity extends FragmentActivity implements
 
                 distanceString = Math.floor(calcDistance(newRouteStartLat, newRouteStartLong, newRouteFinishLat, newRouteFinishLong) * 100) / 100 + "";
 
-                warningTextView.setText("Route saved!");
-                warningTextView.setTextColor(Color.GREEN);
                 startButton.setEnabled(false);
                 stopButton.setEnabled(false);
                 startButton.setAlpha(.5f);
@@ -329,7 +332,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
 
 
-/*
+
 
             rectOptions.add(new LatLng(63.42796855, 10.40603855));
             rectOptions.add(new LatLng(63.42788217, 10.40732601));
@@ -357,7 +360,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
 
                         hannaFinishLat =63.4296169;
-                        hannaFinishLong = 10.4065531; */
+                        hannaFinishLong = 10.4065531;
 
 
         startButton.setOnClickListener(new View.OnClickListener() {
@@ -370,8 +373,6 @@ public class NewRouteActivity extends FragmentActivity implements
 
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-                    warningTextView.setText("Start saved.Now running...");
-                    warningTextView.setTextColor(Color.GREEN);
                     startButton.setEnabled(false);
                     stopButton.setEnabled(true);
                     startButton.setAlpha(.5f);
@@ -431,7 +432,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
         Firebase newRefferRouteID = newReffer.child(route_id);
 
-        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id, "");
+        UserRouteRelation relation = new UserRouteRelation(route_id, user_id, username, point_collection_id);
 
         newRefferRouteID.push().setValue(relation);
 
@@ -582,7 +583,7 @@ public class NewRouteActivity extends FragmentActivity implements
         checkCounter();
 
 
-        timer.schedule(timerTask, 3000, 3500);
+        timer.schedule(timerTask, 5000, 5000);
     }
     public void checkCounter() {
         timerTask = new TimerTask() {
@@ -591,7 +592,7 @@ public class NewRouteActivity extends FragmentActivity implements
                     public void run() {
                         if (running == true) {
 
-                            Point point = new Point(user_id, route_id, current_lat, current_long, 0, point_number);
+                            Route.Point point = new Route.Point(user_id, route_id, current_lat, current_long, 0, point_number);
                             newPoints.add(point);
 
                             float[] results = new float[1];
@@ -740,7 +741,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
         //TODO: add time here
 
-        History history = new History(user_id, route_id, distance + "", avg_speed + "",topSpeed * 36/10+ "", time, "N/A", "N/A");
+        History history = new History(user_id, route_id, distance + "", avg_speed + "", time);
 
         Firebase historyRef = new Firebase(Config.HISTORY_URL);
         historyRef.push().setValue(history);
@@ -774,7 +775,7 @@ public class NewRouteActivity extends FragmentActivity implements
     }
 
     public void passIntent() {
-        Intent intent2 = new Intent(getApplicationContext(), Finish.class);
+        Intent intent2 = new Intent(getApplicationContext(), FinishActivity.class);
         intent2.putExtra("LAT1", lat1);
         intent2.putExtra("LONG1", long1);
         intent2.putExtra("LAT2", lat2);
@@ -793,9 +794,8 @@ public class NewRouteActivity extends FragmentActivity implements
         Log.v("you are here", mLastLocation.getLatitude() + "lats og long " + mLastLocation.getLongitude());
 
 
-       // MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(63.4279523, 10.4059805)).title("Start");
-
-        //MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(63.42802, 10.4044252)).title("Finish");
+        MarkerOptions markerOptions1 = new MarkerOptions().position(new LatLng(hannaStartLat, hannaStartLong)).title("Start");
+        MarkerOptions markerOptions2 = new MarkerOptions().position(new LatLng(hannaFinishLat, hannaFinishLong)).title("Finish");
 
 
 
@@ -804,19 +804,19 @@ public class NewRouteActivity extends FragmentActivity implements
 
        // rectOptions.add(new LatLng(63.4296169, 10.4065531));
 
-       // markerOptions1.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        markerOptions1.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
 
-      //  markerOptions2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        markerOptions2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
 
-     //   mMap.addMarker(markerOptions1);
-       // mMap.addMarker(markerOptions2);
+        mMap.addMarker(markerOptions1);
+        mMap.addMarker(markerOptions2);
 
         markerOptions3.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
 
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom((new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude())), 17));
 
        // Log.v("rectOptions: ", rectOptions.getPoints().size() + "");
-        //((mMap.addPolyline(rectOptions);
+        mMap.addPolyline(rectOptions);
 
         if(mMap == null) {
             Toast.makeText(this.getApplicationContext(),

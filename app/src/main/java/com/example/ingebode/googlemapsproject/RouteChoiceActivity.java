@@ -7,8 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -17,20 +15,15 @@ import com.example.ingebode.R;
 
 
 import com.example.ingebode.googlemapsproject.models.Route;
-import com.example.ingebode.googlemapsproject.models.User;
-import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
-import com.firebase.client.ValueEventListener;
 import com.firebase.ui.FirebaseListAdapter;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by ingebode on 09/03/16.
  */
-public class RouteChoice extends Activity{
+public class RouteChoiceActivity extends Activity{
 
 
     TextView usernameTextView;
@@ -65,7 +58,7 @@ public class RouteChoice extends Activity{
         setContentView(R.layout.route_choice);
 
         TextView welcome = (TextView)findViewById(R.id.welcome);
-        welcome.setTypeface(myFontMedium);
+        welcome.setTypeface(myFontBold);
 
 
 
@@ -88,11 +81,11 @@ public class RouteChoice extends Activity{
                 TextView routeNameView = (TextView) view.findViewById(R.id.route_name);
                 TextView created_by = (TextView) view.findViewById(R.id.created_by);
                 TextView by = (TextView) view.findViewById(R.id.by);
-                created_by.setText(r.getUsername());
+                created_by.setText("user"+(i+1));
                 created_by.setTypeface(myFontLight);
                 by.setTypeface(myFontLight);
 
-                routeNameView.setText(r.getRoute_name());
+                routeNameView.setText("route"+(i+1));
                 routeNameView.setTypeface(myFontMedium);
 
             }
@@ -113,7 +106,7 @@ public class RouteChoice extends Activity{
                     route_name = selectedRoute.getRoute_name();
                     point_collection_id = selectedRoute.getPoint_collection_id();
 
-                    Log.v("RouteChoice: ", "point collection id " + point_collection_id);
+                    Log.v("RouteChoiceActivity: ", "point collection id " + point_collection_id);
                     passIntent();
                 }
             }
@@ -140,7 +133,7 @@ public class RouteChoice extends Activity{
         }
     }
     public void passIntent(){
-        Intent intent = new Intent(this, CompetitorChoice.class);
+        Intent intent = new Intent(this, CompetitorChoiceActivity.class);
         intent.putExtra("LAT1", lat1);
         intent.putExtra("LAT2", lat2);
         intent.putExtra("LONG1", long1);

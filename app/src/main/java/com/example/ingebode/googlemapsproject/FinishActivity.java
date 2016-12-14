@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Created by ingebode on 15/03/16.
  */
-public class Finish extends Activity {
+public class FinishActivity extends Activity {
         String user_id,route_id, username, route_name;
         int user_repetition;
         boolean createNewRoute;
@@ -27,6 +27,7 @@ public class Finish extends Activity {
     Typeface myFontBold;
     Button exit, returnBtn;
     TextView goodJob;
+    Button logOut;
 
     Firebase newRouteRef;
     String ref;
@@ -37,9 +38,12 @@ public class Finish extends Activity {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_finish);
 
+            logOut = (Button)findViewById(R.id.log_out_btn);
+
             myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
             myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
             myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
+            logOut.setTypeface(myFontLight);
 
             returnBtn = (Button)findViewById(R.id.return_btn);
             returnBtn.setTypeface(myFontLight);

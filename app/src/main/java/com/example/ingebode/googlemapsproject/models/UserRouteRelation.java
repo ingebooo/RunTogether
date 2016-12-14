@@ -9,15 +9,13 @@ public class UserRouteRelation {
     String route_id;
     String username;
     String point_collection_id;
-    String time;
 
 
-    public UserRouteRelation(String route_id, String user_id, String username, String point_collection_id, String time){
+    public UserRouteRelation(String route_id, String user_id, String username, String point_collection_id){
         this.user_id = user_id;
         this.route_id = route_id;
         this.username = username;
         this.point_collection_id = point_collection_id;
-        this.time = time;
     }
     public UserRouteRelation(){
 
@@ -34,8 +32,5 @@ public class UserRouteRelation {
 
     public String getUser_id() {
         return user_id;
-    }
-    public String getTime(){
-        return time;
     }
 }

@@ -3,24 +3,35 @@ package com.example.ingebode.googlemapsproject;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.ingebode.R;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
 import com.firebase.client.Firebase;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.Wearable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * Created by ingeborgoftedal on 28/09/16.
  */
-public class WelcomeActivity extends Activity {
+public class WelcomeActivity extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private String user_id;
     private String route_name;
@@ -34,12 +45,20 @@ public class WelcomeActivity extends Activity {
 
     Button new_route, choose_route, log_out;
     TextView welcome;
+    private GoogleApiClient mGoogleApiClient;
+    private static final String START_ACTIVITY_PATH = "/start-activity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.welcome_activity);
         Firebase.setAndroidContext(this);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
 
         myFontMedium = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Medium.otf");
         myFontLight = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Light.otf");
@@ -82,7 +101,7 @@ public class WelcomeActivity extends Activity {
 
         Firebase newRefferRouteID = newReffer.child(rid);
 
-        UserRouteRelation relation = new UserRouteRelation(rid, uid, uname, pointid, "");
+        UserRouteRelation relation = new UserRouteRelation(rid, uid, uname, pointid);
 
         newRefferRouteID.push().setValue(relation);
 
@@ -96,10 +115,12 @@ public class WelcomeActivity extends Activity {
     }
 
     public void chooseRoute(View v){
+
+        new StartWearableActivityTask().execute();
         passIntent();
     }
     public void passIntent(){
-        Intent intent = new Intent(this, RouteChoice.class);
+        Intent intent = new Intent(this, RouteChoiceActivity.class);
         intent.putExtra("USER_ID", user_id);
         intent.putExtra("USERNAME", username);
         startActivity(intent);
@@ -110,9 +131,67 @@ public class WelcomeActivity extends Activity {
         intent.putExtra("USER_ID", user_id);
         startActivity(intent);
     }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    private class StartWearableActivityTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... args) {
+            Collection<String> nodes = getNodes();
+            Log.v("WelcomeActivity", "StartWearableActivityTask");
+            for (String node : nodes) {
+                sendStartActivityMessage(node);
+            }
+            return null;
+        }
+    }
+
+    private void sendStartActivityMessage(String node) {
+        Wearable.MessageApi.sendMessage(
+                mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            Log.e("WelcomeActivity", "Failed to send message with status code: "
+                                    + sendMessageResult.getStatus().getStatusCode());
+                        } else {
+                            Log.v("WelcomeActivity", "send start activity task");
+                        }
+                    }
+                }
+        );
+    }
+
+    private Collection<String> getNodes() {
+        HashSet<String> results = new HashSet<>();
+        NodeApi.GetConnectedNodesResult nodes =
+                Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+
+        for (Node node : nodes.getNodes()) {
+            results.add(node.getId());
+        }
+
+        return results;
+    }
+
     @Override
     protected void onStart(){
         super.onStart();
+        mGoogleApiClient.connect();
     }
 
     @Override

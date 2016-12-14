@@ -3,6 +3,7 @@ package com.example.ingebode.googlemapsproject;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,7 +14,9 @@ import android.widget.TextView;
 
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import com.example.ingebode.R;
 
@@ -36,8 +39,14 @@ import com.example.ingebode.googlemapsproject.models.User;
 import com.example.ingebode.googlemapsproject.models.UserRouteRelation;
 import com.firebase.client.*;
 import com.firebase.ui.FirebaseListAdapter;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.Wearable;
 
-public class CompetitorChoice extends Activity {
+public class CompetitorChoiceActivity extends Activity {
     public static double lat1,long1,lat2,long2;
     public static String route_id,user_id,competitor_id, point_collection_id;
     public static boolean createNewRoute;
@@ -54,6 +63,7 @@ public class CompetitorChoice extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_competitor_choice);
 
+
         final ListView listview = (ListView) findViewById(R.id.UserlistView1);
 
         Intent intent = getIntent();
@@ -66,11 +76,10 @@ public class CompetitorChoice extends Activity {
         createNewRoute=intent.getExtras().getBoolean("CREATENEWROUTE");
         route_name=intent.getStringExtra("ROUTE_NAME");
         point_collection_id = intent.getStringExtra("POINT_COLLECTION_ID");
-        Log.v("CompetitorChoice: ", "point collection id " + point_collection_id);
 
         Firebase ref = new Firebase(Config.FIREBASE_URL).child("routeRelations").child(route_id);
 
-        mAdapter = new FirebaseListAdapter<UserRouteRelation>(this, UserRouteRelation.class, R.layout.custom_list, ref) {
+        mAdapter = new FirebaseListAdapter<UserRouteRelation>(this, UserRouteRelation.class, R.layout.custom_list2, ref) {
             @Override
             protected void populateView(View view, UserRouteRelation ur, int i) {
                 TextView nameView = (TextView) view.findViewById(R.id.route_name);
@@ -80,7 +89,6 @@ public class CompetitorChoice extends Activity {
                 by.setText("");
                 nameView.setText(ur.getUsername());
                 nameView.setTypeface(myFontLight);
-                nameView.setTextSize(15);
             }
         };
         listview.setAdapter(mAdapter);
@@ -92,7 +100,7 @@ public class CompetitorChoice extends Activity {
         myFontBold = Typeface.createFromAsset(getAssets(), "fonts/Gotham-Bold.otf");
 
         TextView text1 = (TextView)findViewById(R.id.text);
-        text1.setTypeface(myFontMedium);
+        text1.setTypeface(myFontBold);
         //TextView text2 = (TextView)findViewById(R.id.text2);
         //text2.setTypeface(myFontMedium);
 

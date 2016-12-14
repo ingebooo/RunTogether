@@ -36,8 +36,10 @@ import java.util.List;
 public class ListenerService extends WearableListenerService {
 
     private static final String WEARABLE_DATA_PATH = "/wearable_data";
+    private static final String WEARABLE_DATA_PATH2 = "/wearable_data";
     private static final String START_ACTIVITY_PATH = "/start-activity";
     ArrayList<DataMap> pointsList;
+    ArrayList<DataMap> pointsList2;
     GoogleApiClient mGoogleApiClient;
     private ArrayList<Point> filePoints;
     private String route_id;
@@ -48,6 +50,9 @@ public class ListenerService extends WearableListenerService {
     public void onCreate() {
         super.onCreate();
         Log.v("ListenerService", "onCreate" + "");
+
+
+
         if(pointsList != null){
             Log.v("ListenerService", "pointsList != null" + "");
             onPointsReceived(pointsList, filePoints);
@@ -68,30 +73,28 @@ public class ListenerService extends WearableListenerService {
                 100); */
     }
 
+
+
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        Log.v("wearable","MainActivity, onDataChanged" + "");
+        Log.v("wearable","Listenerservive, onDataChanged" + "");
         for (DataEvent event : dataEvents) {
-            if (event.getType() == DataEvent.TYPE_CHANGED &&
-                    event.getDataItem().getUri().getPath().equals("/txt")) {
-
-                // Get the Asset object
-
-                DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-                Asset asset = dataMapItem.getDataMap().getAsset("com.example.company.key.TXT");
-
-                Log.v("onDataChanged", "startWearActivity" + "");
-
-                new ConvertAssetAsyncTask().execute(asset);
-
-            } else if (event.getType() == DataEvent.TYPE_CHANGED) {
+            if (event.getType() == DataEvent.TYPE_CHANGED) {
                 // Check the data path
                 String path = event.getDataItem().getUri().getPath();
-                if (path.equals(WEARABLE_DATA_PATH)) {}
-                DataMapItem dataItem = DataMapItem.fromDataItem (event.getDataItem());
-                pointsList = dataItem.getDataMap().getDataMapArrayList("pointsList");
-                onPointsReceived(pointsList, null);
+                if (path.equals(WEARABLE_DATA_PATH)) {
+                    DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
+                    pointsList = dataItem.getDataMap().getDataMapArrayList("pointsList");
+                    onPointsReceived(pointsList, null);
+                }
+
             }
+        }
+    }
+
+    public void addList(ArrayList<DataMap> pointsList, ArrayList<DataMap> pointsList2){
+        for(DataMap map : pointsList2){
+            pointsList.add(map);
         }
     }
 
@@ -276,15 +279,18 @@ public class ListenerService extends WearableListenerService {
         dataIntent.putParcelableArrayListExtra("pointsList", intentList);
         LocalBroadcastManager.getInstance(this).sendBroadcast(dataIntent);
     }
-/*
+
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
+
         // Check to see if the message is to start an activity
         if (messageEvent.getPath().equals(START_ACTIVITY_PATH)) {
-            Log.v("Wear", "listenerservice ready to run" + "");
+            Log.v("ListenerService", "start actitivty");
             Intent startIntent = new Intent(this, MainActivity.class);
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(startIntent);
+            //readyToRun = true;
         }
-    }*/
+
+    }
 }
