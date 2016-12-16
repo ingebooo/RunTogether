@@ -583,7 +583,7 @@ public class NewRouteActivity extends FragmentActivity implements
         checkCounter();
 
 
-        timer.schedule(timerTask, 5000, 5000);
+        timer.schedule(timerTask, 1000, 100);
     }
     public void checkCounter() {
         timerTask = new TimerTask() {
@@ -614,8 +614,8 @@ public class NewRouteActivity extends FragmentActivity implements
 
                             Toast.makeText(getApplicationContext(), "Point added to list", Toast.LENGTH_SHORT).show();
 
-/*
-                            if(newPoints.size() == 350){
+                            //its only possible to send around 353 points through the data layer when not using assets
+                            if(newPoints.size() == 380){
                                 Toast.makeText(getApplicationContext(), "Stopped recording route", Toast.LENGTH_SHORT).show();
 
                                 //writePointsToFile(cords);
@@ -704,7 +704,7 @@ public class NewRouteActivity extends FragmentActivity implements
 
                                 AlertDialog b = dialogBuilder.create();
                                 b.show();
-                            }*/
+                            }
                         }
                     }
                 });
