@@ -583,7 +583,7 @@ public class NewRouteActivity extends FragmentActivity implements
         checkCounter();
 
 
-        timer.schedule(timerTask, 1000, 100);
+        timer.schedule(timerTask, 5000, 5000);
     }
     public void checkCounter() {
         timerTask = new TimerTask() {
